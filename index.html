@@ -46,6 +46,21 @@
   .driver-badge{width:100%;height:100%;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:700;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.5);line-height:1;}
   .driver-badge .d-num{font-size:14px;font-family:'Russo One',sans-serif;}
   .driver-badge .d-code{font-size:7px;letter-spacing:1px;opacity:.85;}
+  .driver-img{width:100%;height:100%;border-radius:6px;object-fit:cover;background:var(--darker);}
+  .driver-img-wrap{position:relative;width:100%;height:100%;border-radius:6px;overflow:hidden;}
+  .driver-img-wrap .d-label{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.8));font-family:'Barlow Condensed',sans-serif;font-size:6px;font-weight:700;color:#fff;text-align:center;padding:1px 2px;letter-spacing:.5px;text-transform:uppercase;line-height:1.2;}
+
+  /* Cell photo */
+  .cell-photo{width:100%;max-height:46px;border-radius:4px;object-fit:cover;margin-top:2px;}
+
+  /* Photo picker in edit modal */
+  .photo-grid{display:flex;gap:4px;flex-wrap:wrap;max-height:180px;overflow-y:auto;padding:4px 0;}
+  .photo-opt{width:42px;height:42px;border-radius:8px;border:2px solid var(--border);cursor:pointer;overflow:hidden;transition:border-color .2s;background:var(--card-bg);display:flex;align-items:center;justify-content:center;}
+  .photo-opt:hover,.photo-opt.sel{border-color:var(--gold);box-shadow:0 0 8px rgba(255,215,0,.3);}
+  .photo-opt img{width:100%;height:100%;object-fit:cover;border-radius:6px;}
+  .photo-tabs{display:flex;gap:4px;margin-bottom:6px;}
+  .photo-tab{font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;background:var(--card-bg);border:1px solid var(--border);color:var(--muted);padding:3px 10px;border-radius:4px;cursor:pointer;transition:all .2s;}
+  .photo-tab.active{background:var(--red);color:#fff;border-color:var(--red);}
 
   .add-form{display:flex;gap:8px;width:100%;max-width:420px;}
   .add-form input{flex:1;background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:12px 16px;color:var(--text);font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:600;letter-spacing:1px;outline:none;transition:border-color .2s;}
@@ -391,6 +406,16 @@
       </div>
     </div>
     <div class="em-field">
+      <div class="em-label">📷 Photo (pilote / écurie)</div>
+      <div class="photo-tabs">
+        <button class="photo-tab active" data-ptab="drivers" onclick="switchPhotoTab('drivers',this)">Pilotes</button>
+        <button class="photo-tab" data-ptab="teams" onclick="switchPhotoTab('teams',this)">Ecuries</button>
+        <button class="photo-tab" data-ptab="none" onclick="switchPhotoTab('none',this)">Aucune</button>
+      </div>
+      <div class="photo-grid" id="emPhotoGrid"></div>
+      <input type="hidden" id="emPhoto" />
+    </div>
+    <div class="em-field">
       <div class="em-label">Probabilité</div>
       <div class="prob-sel" id="emProb">
         <div class="prob-opt" data-p="ph" onclick="pickProb('ph')">🟢 Haute</div>
@@ -498,8 +523,10 @@ const lineEls={r0:'lr0',r1:'lr1',r2:'lr2',r3:'lr3',r4:'lr4',c0:'lc0',c1:'lc1',c2
 const SM={ph:10,pm:15,pl:25};
 const EMOJIS=['🏎️','🏁','🔴','🟠','🟡','🟢','🔵','🚀','👑','🏆','⚡','🎯','🔥','💎','🌟','🦁','🐺','🦊','🐉','🎮'];
 
+const F1_IMG='https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers';
+
 const F1_TEAMS=[
-  {code:'RBR',name:'Red Bull',color:'#3671C6'},
+  {code:'RBR',name:'Red Bull Racing',color:'#3671C6'},
   {code:'FER',name:'Ferrari',color:'#E8002D'},
   {code:'MCL',name:'McLaren',color:'#FF8000'},
   {code:'MER',name:'Mercedes',color:'#27F4D2'},
@@ -507,32 +534,34 @@ const F1_TEAMS=[
   {code:'ALP',name:'Alpine',color:'#FF87BC'},
   {code:'WIL',name:'Williams',color:'#64C4FF'},
   {code:'RB',name:'Racing Bulls',color:'#6692FF'},
-  {code:'KIC',name:'Kick Sauber',color:'#52E252'},
+  {code:'AUD',name:'Audi',color:'#FF0000'},
   {code:'HAA',name:'Haas',color:'#B6BABD'},
-  {code:'CAD',name:'Cadillac',color:'#FFD700'},
+  {code:'CAD',name:'Cadillac',color:'#CFB991'},
 ];
 
 const F1_DRIVERS=[
-  {num:'1',code:'VER',name:'Verstappen',team:'RBR',color:'#3671C6'},
-  {num:'22',code:'TSU',name:'Tsunoda',team:'RBR',color:'#3671C6'},
-  {num:'16',code:'LEC',name:'Leclerc',team:'FER',color:'#E8002D'},
-  {num:'44',code:'HAM',name:'Hamilton',team:'FER',color:'#E8002D'},
-  {num:'4',code:'NOR',name:'Norris',team:'MCL',color:'#FF8000'},
-  {num:'81',code:'PIA',name:'Piastri',team:'MCL',color:'#FF8000'},
-  {num:'63',code:'RUS',name:'Russell',team:'MER',color:'#27F4D2'},
-  {num:'12',code:'ANT',name:'Antonelli',team:'MER',color:'#27F4D2'},
-  {num:'14',code:'ALO',name:'Alonso',team:'AST',color:'#229971'},
-  {num:'18',code:'STR',name:'Stroll',team:'AST',color:'#229971'},
-  {num:'10',code:'GAS',name:'Gasly',team:'ALP',color:'#FF87BC'},
-  {num:'7',code:'DOO',name:'Doohan',team:'ALP',color:'#FF87BC'},
-  {num:'23',code:'ALB',name:'Albon',team:'WIL',color:'#64C4FF'},
-  {num:'55',code:'SAI',name:'Sainz',team:'WIL',color:'#64C4FF'},
-  {num:'30',code:'LAW',name:'Lawson',team:'RB',color:'#6692FF'},
-  {num:'87',code:'HAD',name:'Hadjar',team:'RB',color:'#6692FF'},
-  {num:'27',code:'HUL',name:'Hülkenberg',team:'KIC',color:'#52E252'},
-  {num:'5',code:'BOR',name:'Bortoleto',team:'KIC',color:'#52E252'},
-  {num:'31',code:'OCO',name:'Ocon',team:'HAA',color:'#B6BABD'},
-  {num:'50',code:'BEA',name:'Bearman',team:'HAA',color:'#B6BABD'},
+  {num:'3',code:'VER',first:'Max',last:'Verstappen',team:'RBR',color:'#3671C6',img:`${F1_IMG}/V/MAXVER01_Max_Verstappen/maxver01.png`},
+  {num:'20',code:'HAD',first:'Isack',last:'Hadjar',team:'RBR',color:'#3671C6',img:`${F1_IMG}/H/ISAHAD01_Isack_Hadjar/isahad01.png`},
+  {num:'16',code:'LEC',first:'Charles',last:'Leclerc',team:'FER',color:'#E8002D',img:`${F1_IMG}/L/CHALEC01_Charles_Leclerc/chalec01.png`},
+  {num:'44',code:'HAM',first:'Lewis',last:'Hamilton',team:'FER',color:'#E8002D',img:`${F1_IMG}/H/LEWHAM01_Lewis_Hamilton/lewham01.png`},
+  {num:'1',code:'NOR',first:'Lando',last:'Norris',team:'MCL',color:'#FF8000',img:`${F1_IMG}/N/LANNOR01_Lando_Norris/lannor01.png`},
+  {num:'81',code:'PIA',first:'Oscar',last:'Piastri',team:'MCL',color:'#FF8000',img:`${F1_IMG}/P/OSCPIA01_Oscar_Piastri/oscpia01.png`},
+  {num:'63',code:'RUS',first:'George',last:'Russell',team:'MER',color:'#27F4D2',img:`${F1_IMG}/R/GEORUS01_George_Russell/georus01.png`},
+  {num:'12',code:'ANT',first:'Kimi',last:'Antonelli',team:'MER',color:'#27F4D2',img:`${F1_IMG}/A/KIMANT01_Kimi_Antonelli/kimant01.png`},
+  {num:'14',code:'ALO',first:'Fernando',last:'Alonso',team:'AST',color:'#229971',img:`${F1_IMG}/A/FERALO01_Fernando_Alonso/feralo01.png`},
+  {num:'18',code:'STR',first:'Lance',last:'Stroll',team:'AST',color:'#229971',img:`${F1_IMG}/S/LANSTR01_Lance_Stroll/lanstr01.png`},
+  {num:'10',code:'GAS',first:'Pierre',last:'Gasly',team:'ALP',color:'#FF87BC',img:`${F1_IMG}/G/PIEGAS01_Pierre_Gasly/piegas01.png`},
+  {num:'43',code:'COL',first:'Franco',last:'Colapinto',team:'ALP',color:'#FF87BC',img:`${F1_IMG}/C/FRACOL01_Franco_Colapinto/fracol01.png`},
+  {num:'23',code:'ALB',first:'Alexander',last:'Albon',team:'WIL',color:'#64C4FF',img:`${F1_IMG}/A/ALEALB01_Alexander_Albon/alealb01.png`},
+  {num:'55',code:'SAI',first:'Carlos',last:'Sainz',team:'WIL',color:'#64C4FF',img:`${F1_IMG}/S/CARSAI01_Carlos_Sainz/carsai01.png`},
+  {num:'22',code:'TSU',first:'Yuki',last:'Tsunoda',team:'RB',color:'#6692FF',img:`${F1_IMG}/T/YUKTSU01_Yuki_Tsunoda/yuktsu01.png`},
+  {num:'30',code:'LAW',first:'Liam',last:'Lawson',team:'RB',color:'#6692FF',img:`${F1_IMG}/L/LIALAW01_Liam_Lawson/lialaw01.png`},
+  {num:'27',code:'HUL',first:'Nico',last:'Hulkenberg',team:'AUD',color:'#FF0000',img:`${F1_IMG}/H/NICHUL01_Nico_Hulkenberg/nichul01.png`},
+  {num:'5',code:'BOR',first:'Gabriel',last:'Bortoleto',team:'AUD',color:'#FF0000',img:`${F1_IMG}/B/GABBOR01_Gabriel_Bortoleto/gabbor01.png`},
+  {num:'31',code:'OCO',first:'Esteban',last:'Ocon',team:'HAA',color:'#B6BABD',img:`${F1_IMG}/O/ESTOCO01_Esteban_Ocon/estoco01.png`},
+  {num:'87',code:'BEA',first:'Oliver',last:'Bearman',team:'HAA',color:'#B6BABD',img:`${F1_IMG}/B/OLIBEA01_Oliver_Bearman/olibea01.png`},
+  {num:'11',code:'PER',first:'Sergio',last:'Perez',team:'CAD',color:'#CFB991',img:`${F1_IMG}/P/SERPER01_Sergio_Perez/serper01.png`},
+  {num:'77',code:'BOT',first:'Valtteri',last:'Bottas',team:'CAD',color:'#CFB991',img:`${F1_IMG}/B/VALBOT01_Valtteri_Bottas/valbot01.png`},
 ];
 const SK='players';
 
@@ -638,15 +667,15 @@ function renderIconTab(tab){
     F1_DRIVERS.forEach(d=>{
       const val=`[D]${d.code}${d.num}`;
       const b=document.createElement('button');b.className='emoji-btn'+(selEmoji===val?' sel':'');
-      b.title=`${d.name} #${d.num}`;
-      b.innerHTML=`<div class="driver-badge" style="background:${d.color}"><span class="d-num">${d.num}</span><span class="d-code">${d.code}</span></div>`;
+      b.title=`${d.first} ${d.last} #${d.num}`;
+      b.style.padding='0';b.style.overflow='hidden';
+      b.innerHTML=`<div class="driver-img-wrap"><img class="driver-img" src="${d.img}" onerror="this.parentElement.innerHTML='<div class=driver-badge style=background:${d.color}><span class=d-num>${d.num}</span><span class=d-code>${d.code}</span></div>'" /><div class="d-label">${d.last}</div></div>`;
       b.onclick=()=>{selEmoji=val;document.querySelectorAll('.emoji-btn').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');};
       ep.appendChild(b);
     });
   }
 }
 
-// Render player avatar (emoji or team/driver badge)
 function renderAvatar(emoji,size){
   size=size||36;
   if(emoji&&emoji.startsWith('[T]')){
@@ -659,7 +688,7 @@ function renderAvatar(emoji,size){
     const code=rest.slice(0,3);
     const num=rest.slice(3);
     const d=F1_DRIVERS.find(x=>x.code===code&&x.num===num);
-    if(d) return `<div class="driver-badge" style="background:${d.color};width:${size}px;height:${size}px;border-radius:8px"><span class="d-num" style="font-size:${Math.max(10,size/2.5)}px">${d.num}</span><span class="d-code" style="font-size:${Math.max(6,size/5)}px">${d.code}</span></div>`;
+    if(d) return `<div style="width:${size}px;height:${size}px;border-radius:8px;overflow:hidden;position:relative"><img src="${d.img}" style="width:100%;height:100%;object-fit:cover" onerror="this.outerHTML='<div class=driver-badge style=background:${d.color};width:${size}px;height:${size}px;border-radius:8px><span class=d-num>${d.num}</span><span class=d-code>${d.code}</span></div>'" /></div>`;
   }
   return emoji||'🏎️';
 }
@@ -778,7 +807,7 @@ function buildGrid(){
     d.onclick=()=>{if(editMode)openEdit(i);else toggle(i);};
     d.innerHTML=`
       <span class="pbadge ${c.prob}">${c.pct}</span>
-      <div class="clogo" style="background:${c.tc?c.tc+'22':'rgba(255,255,255,.05)'};border:1px solid ${c.tc||'rgba(255,255,255,.08)'}"><span style="font-size:20px">${c.emoji}</span></div>
+      <div class="clogo" style="background:${c.tc?c.tc+'22':'rgba(255,255,255,.05)'};border:1px solid ${c.tc||'rgba(255,255,255,.08)'}">${c.photo?renderCellPhoto(c.photo):`<span style="font-size:20px">${c.emoji}</span>`}</div>
       <div class="ctxt">${c.text.replace(/\n/g,'<br>')}</div>
       <div class="ctag">${c.tag}</div>`;
     // Drag events (desktop)
@@ -926,10 +955,13 @@ function openEdit(i){
   document.getElementById('emTag').value=c.tag;
   document.getElementById('emTc').value=c.tc||'';
   document.getElementById('emPct').value=c.pct;
+  document.getElementById('emPhoto').value=c.photo||'';
   pickProb(c.prob);
   updateEditPreview();
+  // Load photo picker
+  if(c.photo&&c.photo.startsWith('[T]')) switchPhotoTab('teams');
+  else switchPhotoTab('drivers');
   document.getElementById('editModal').classList.add('show');
-  // live preview
   ['emText','emEmoji','emTag'].forEach(id=>document.getElementById(id).oninput=updateEditPreview);
 }
 
@@ -962,9 +994,75 @@ async function saveEdit(){
   c.tc=document.getElementById('emTc').value||null;
   c.pct=document.getElementById('emPct').value;
   c.prob=editProb;
+  c.photo=document.getElementById('emPhoto').value||null;
   await saveGrid();
   closeEdit();
   buildGrid();applyChecked();applyLines(false);
+}
+
+// ═══════ PHOTO PICKER (EDIT MODAL) ═══════
+function switchPhotoTab(tab,btn){
+  if(btn){
+    document.querySelectorAll('.photo-tab').forEach(t=>t.classList.remove('active'));
+    btn.classList.add('active');
+  } else {
+    document.querySelectorAll('.photo-tab').forEach(t=>{
+      t.classList.toggle('active',t.dataset.ptab===tab);
+    });
+  }
+  const grid=document.getElementById('emPhotoGrid');
+  const curVal=document.getElementById('emPhoto').value;
+  grid.innerHTML='';
+  if(tab==='none'){
+    document.getElementById('emPhoto').value='';
+    grid.innerHTML='<span style="color:var(--muted);font-family:\'Barlow Condensed\',sans-serif;font-size:12px;letter-spacing:1px;padding:4px;">Pas de photo — l\'emoji sera affich\u00e9</span>';
+    return;
+  }
+  if(tab==='drivers'){
+    F1_DRIVERS.forEach(d=>{
+      const val=`[D]${d.code}${d.num}`;
+      const opt=document.createElement('div');
+      opt.className='photo-opt'+(curVal===val?' sel':'');
+      opt.title=`${d.first} ${d.last} #${d.num}`;
+      opt.innerHTML=`<img src="${d.img}" onerror="this.outerHTML='<div class=team-badge style=background:${d.color};font-size:9px>${d.code}</div>'" />`;
+      opt.onclick=()=>{
+        document.getElementById('emPhoto').value=val;
+        document.querySelectorAll('.photo-opt').forEach(x=>x.classList.remove('sel'));
+        opt.classList.add('sel');
+      };
+      grid.appendChild(opt);
+    });
+  } else if(tab==='teams'){
+    F1_TEAMS.forEach(t=>{
+      const val=`[T]${t.code}`;
+      const opt=document.createElement('div');
+      opt.className='photo-opt'+(curVal===val?' sel':'');
+      opt.title=t.name;
+      opt.innerHTML=`<div class="team-badge" style="background:${t.color};width:100%;height:100%;font-size:10px">${t.code}</div>`;
+      opt.onclick=()=>{
+        document.getElementById('emPhoto').value=val;
+        document.getElementById('emTc').value=t.color;
+        document.querySelectorAll('.photo-opt').forEach(x=>x.classList.remove('sel'));
+        opt.classList.add('sel');
+      };
+      grid.appendChild(opt);
+    });
+  }
+}
+
+function renderCellPhoto(photo){
+  if(!photo) return '';
+  if(photo.startsWith('[D]')){
+    const rest=photo.slice(3),code=rest.slice(0,3),num=rest.slice(3);
+    const d=F1_DRIVERS.find(x=>x.code===code&&x.num===num);
+    if(d) return `<img class="cell-photo" src="${d.img}" onerror="this.outerHTML='<span style=font-size:20px>${d.code}</span>'" />`;
+  }
+  if(photo.startsWith('[T]')){
+    const code=photo.slice(3);
+    const t=F1_TEAMS.find(x=>x.code===code);
+    if(t) return `<div class="team-badge" style="background:${t.color};width:36px;height:36px;border-radius:6px;font-size:10px">${t.code}</div>`;
+  }
+  return '';
 }
 
 // ═══════ SCOREBOARD ═══════
