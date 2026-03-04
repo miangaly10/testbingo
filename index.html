@@ -401,15 +401,14 @@
       <div class="em-label">Texte (utiliser \n pour les sauts de ligne)</div>
       <textarea class="em-textarea" id="emText" rows="3"></textarea>
     </div>
-    <div class="em-row">
-      <div class="em-field">
-        <div class="em-label">Emoji</div>
-        <input class="em-input" id="emEmoji" maxlength="4"/>
-      </div>
-      <div class="em-field">
-        <div class="em-label">Tag</div>
-        <input class="em-input" id="emTag" maxlength="20"/>
-      </div>
+    <div class="em-field">
+      <div class="em-label">Emoji</div>
+      <input type="hidden" id="emEmoji" />
+      <div class="emoji-dropdown-wrap" id="editEmojiWrap"></div>
+    </div>
+    <div class="em-field">
+      <div class="em-label">Tag</div>
+      <input class="em-input" id="emTag" maxlength="20"/>
     </div>
     <div class="em-row">
       <div class="em-field">
@@ -997,6 +996,34 @@ function toggleEditMode(){
   buildGrid();applyChecked();applyLines(false);
 }
 
+function buildEditEmojiPicker(curEmoji){
+  const wrap=document.getElementById('editEmojiWrap');
+  wrap.innerHTML='';
+  const cur=curEmoji||EMOJIS[0];
+  const btn=document.createElement('div');btn.className='emoji-sel-btn';btn.id='editEmojiSelBtn';
+  btn.innerHTML=`<div class="emoji-sel-preview" id="editEmojiPrev">${cur}</div><div class="emoji-sel-label">Choisir un emoji</div><div class="emoji-sel-arrow">\u25bc</div>`;
+  wrap.appendChild(btn);
+  const panel=document.createElement('div');panel.className='emoji-dd-panel';panel.id='editEmojiPanel';
+  EMOJI_CATS.forEach(cat=>{
+    const hdr=document.createElement('div');hdr.className='emoji-dd-cat';hdr.textContent=cat.cat;
+    panel.appendChild(hdr);
+    const grid=document.createElement('div');grid.className='emoji-dd-grid';
+    cat.items.forEach(em=>{
+      const it=document.createElement('div');it.className='emoji-dd-item'+(cur===em?' sel':'');it.textContent=em;
+      it.onclick=()=>{
+        document.getElementById('emEmoji').value=em;
+        document.getElementById('editEmojiPrev').textContent=em;
+        panel.querySelectorAll('.emoji-dd-item').forEach(x=>x.classList.remove('sel'));it.classList.add('sel');
+        updateEditPreview();
+      };
+      grid.appendChild(it);
+    });
+    panel.appendChild(grid);
+  });
+  wrap.appendChild(panel);
+  btn.onclick=()=>{btn.classList.toggle('open');panel.classList.toggle('show');};
+}
+
 function openEdit(i){
   editIdx=i;const c=CELLS[i];
   document.getElementById('emText').value=c.text;
@@ -1006,12 +1033,13 @@ function openEdit(i){
   document.getElementById('emPct').value=c.pct;
   document.getElementById('emPhoto').value=c.photo||'';
   pickProb(c.prob);
+  buildEditEmojiPicker(c.emoji);
   updateEditPreview();
   // Load photo picker
   if(c.photo&&c.photo.startsWith('[T]')) switchPhotoTab('teams');
   else switchPhotoTab('drivers');
   document.getElementById('editModal').classList.add('show');
-  ['emText','emEmoji','emTag'].forEach(id=>document.getElementById(id).oninput=updateEditPreview);
+  ['emText','emTag'].forEach(id=>document.getElementById(id).oninput=updateEditPreview);
 }
 
 function updateEditPreview(){
