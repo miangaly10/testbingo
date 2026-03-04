@@ -512,7 +512,33 @@
 
 <script>
 // ═══════ DATA ═══════
-let CELLS=Array.from({length:25},(_, i)=>({id:i,col:i%5,text:"",tag:"",emoji:"🏎️",tc:null,prob:"",pct:"",photo:null}));
+let CELLS=[
+  {id:0, col:0,text:"",tag:"TEAM ORDERS",emoji:"📣",tc:null,prob:"",pct:"",photo:null},
+  {id:1, col:1,text:"",tag:"SURPRISE POLE",emoji:"😱",tc:null,prob:"",pct:"",photo:null},
+  {id:2, col:2,text:"",tag:"MIDFIELD SURPRISE",emoji:"🎰",tc:null,prob:"",pct:"",photo:null},
+  {id:3, col:3,text:"",tag:"MELBOURNE DRAMA",emoji:"💥",tc:null,prob:"",pct:"",photo:null},
+  {id:4, col:4,text:"",tag:"EPIC COMEBACK",emoji:"🚀",tc:null,prob:"",pct:"",photo:null},
+  {id:5, col:0,text:"",tag:"WEATHER CHAOS",emoji:"🌧️",tc:null,prob:"",pct:"",photo:null},
+  {id:6, col:1,text:"",tag:"FIRST PODIUM",emoji:"🥉",tc:null,prob:"",pct:"",photo:null},
+  {id:7, col:2,text:"",tag:"ROOKIE MOMENT",emoji:"🌀",tc:null,prob:"",pct:"",photo:null},
+  {id:8, col:3,text:"",tag:"LAST LAP DRAMA",emoji:"🔥",tc:null,prob:"",pct:"",photo:null},
+  {id:9, col:4,text:"",tag:"MEME RADIO",emoji:"📻",tc:null,prob:"",pct:"",photo:null},
+  {id:10,col:0,text:"",tag:"TRACK LIMITS",emoji:"⚠️",tc:null,prob:"",pct:"",photo:null},
+  {id:11,col:1,text:"",tag:"LAP 1 CHAOS",emoji:"🚩",tc:null,prob:"",pct:"",photo:null},
+  {id:12,col:2,text:"",tag:"BAD RESTART",emoji:"📉",tc:null,prob:"",pct:"",photo:null},
+  {id:13,col:3,text:"",tag:"PIT STOP FAIL",emoji:"🔧",tc:null,prob:"",pct:"",photo:null},
+  {id:14,col:4,text:"",tag:"DOUBLE DNF",emoji:"💀",tc:null,prob:"",pct:"",photo:null},
+  {id:15,col:0,text:"",tag:"SPIN",emoji:"🌀",tc:null,prob:"",pct:"",photo:null},
+  {id:16,col:1,text:"",tag:"STRATEGY BLUNDER",emoji:"📊",tc:null,prob:"",pct:"",photo:null},
+  {id:17,col:2,text:"",tag:"5s/10s PENALTY",emoji:"⏱️",tc:null,prob:"",pct:"",photo:null},
+  {id:18,col:3,text:"",tag:"DOUBLE PODIUM",emoji:"🏆",tc:null,prob:"",pct:"",photo:null},
+  {id:19,col:4,text:"",tag:"GRAND CHELEM",emoji:"👑",tc:null,prob:"",pct:"",photo:null},
+  {id:20,col:0,text:"",tag:"TEAMMATES COLLIDE",emoji:"💢",tc:null,prob:"",pct:"",photo:null},
+  {id:21,col:1,text:"",tag:"OUTSIDER WIN",emoji:"🎉",tc:null,prob:"",pct:"",photo:null},
+  {id:22,col:2,text:"",tag:"SHOCK Q1 EXIT",emoji:"💔",tc:null,prob:"",pct:"",photo:null},
+  {id:23,col:3,text:"",tag:"RESERVE CALLED UP",emoji:"🔄",tc:null,prob:"",pct:"",photo:null},
+  {id:24,col:4,text:"",tag:"WILD CARD",emoji:"🃏",tc:null,prob:"",pct:"",photo:null},
+];
 const DEFAULT_CELLS=JSON.parse(JSON.stringify(CELLS)); // copie de la grille par défaut
 
 const LINES=[
