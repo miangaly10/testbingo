@@ -330,32 +330,55 @@ const LINES=[
 const lineEls={r0:'lr0',r1:'lr1',r2:'lr2',r3:'lr3',r4:'lr4',c0:'lc0',c1:'lc1',c2:'lc2',c3:'lc3',c4:'lc4',d0:'ld0',d1:'ld1'};
 const SM={ph:10,pm:15,pl:25};
 const EMOJIS=['🏎️','🏁','🔴','🟠','🟡','🟢','🔵','🚀','👑','🏆','⚡','🎯','🔥','💎','🌟','🦁','🐺','🦊','🐉','🎮'];
-const SK='f1bingo2026';
-const GK='f1bingo2026_grid';
+const SK='players';
+const GK='grid';
+
+// ══════════════════════════════════════════════════
+// 🔥 FIREBASE CONFIG — Remplace l'URL ci-dessous
+// ══════════════════════════════════════════════════
+const FB='https://f1-bingo-2026-default-rtdb.firebaseio.com';
+// ══════════════════════════════════════════════════
 
 // ═══════ STATE ═══════
 let players={},curId=null,doneLines=new Set(),selEmoji=EMOJIS[0],editMode=false,editIdx=null,editProb='ph';
 
-// ═══════ STORAGE (localStorage) ═══════
+// ═══════ STORAGE (Firebase Realtime DB) ═══════
 async function load(){
   try{
-    const raw=localStorage.getItem(SK);
-    return raw?JSON.parse(raw):{};
-  }catch{return{};}
+    const r=await fetch(`${FB}/f1bingo/${SK}.json`);
+    const data=await r.json();
+    return data||{};
+  }catch{
+    // Fallback localStorage si Firebase indispo
+    try{const raw=localStorage.getItem('f1_'+SK);return raw?JSON.parse(raw):{};}catch{return{};}
+  }
 }
 async function save(){
-  try{localStorage.setItem(SK,JSON.stringify(players));}catch{}
+  try{
+    await fetch(`${FB}/f1bingo/${SK}.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(players)});
+    localStorage.setItem('f1_'+SK,JSON.stringify(players)); // backup local
+  }catch{
+    try{localStorage.setItem('f1_'+SK,JSON.stringify(players));}catch{}
+  }
 }
 
 // ═══════ GRID STORAGE ═══════
 async function loadGrid(){
   try{
-    const raw=localStorage.getItem(GK);
-    if(raw){const saved=JSON.parse(raw);if(Array.isArray(saved)&&saved.length===25){CELLS.splice(0,CELLS.length,...saved);}}
-  }catch{}
+    const r=await fetch(`${FB}/f1bingo/${GK}.json`);
+    const saved=await r.json();
+    if(Array.isArray(saved)&&saved.length===25){CELLS.splice(0,CELLS.length,...saved);}
+  }catch{
+    try{const raw=localStorage.getItem('f1_'+GK);if(raw){const saved=JSON.parse(raw);if(Array.isArray(saved)&&saved.length===25){CELLS.splice(0,CELLS.length,...saved);}}}catch{}
+  }
 }
 async function saveGrid(){
-  try{localStorage.setItem(GK,JSON.stringify(CELLS));}catch{}
+  try{
+    await fetch(`${FB}/f1bingo/${GK}.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(CELLS)});
+    localStorage.setItem('f1_'+GK,JSON.stringify(CELLS));
+  }catch{
+    try{localStorage.setItem('f1_'+GK,JSON.stringify(CELLS));}catch{}
+  }
 }
 
 // ═══════ INIT ═══════
