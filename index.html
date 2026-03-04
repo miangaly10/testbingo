@@ -472,7 +472,7 @@
       <div class="cp-av" id="cpAv">🏎️</div>
       <div>
         <div class="cp-lbl">Joueur actif</div>
-        <div class="cp-nm" id="cpNm">—</div>
+        <div style="display:flex;align-items:center;gap:6px;"><div class="cp-nm" id="cpNm">—</div><button id="btnEditName" class="btn bs" onclick="editPlayerName()" style="padding:3px 8px;font-size:11px;display:none;">✏️</button></div>
       </div>
     </div>
     <button class="cp-sw" onclick="switchPlayer()">⇄ Changer</button>
@@ -847,6 +847,7 @@ function selectP(id){
   document.getElementById('dragHint').classList.remove('show');
   // Show/hide owner-only controls
   document.getElementById('btnDelPlayer').style.display=isOwner?'':'none';
+  document.getElementById('btnEditName').style.display=isOwner?'':'none';
   document.getElementById('btnEditGrid').style.display=isOwner?'':'none';
   document.getElementById('btnResetGrid').style.display=isOwner?'':'none';
   document.getElementById('viewBadge').style.display=isOwner?'none':'';
@@ -996,6 +997,16 @@ async function resetMe(){
 }
 
 // ═══════ DELETE CURRENT PLAYER ═══════
+async function editPlayerName(){
+  if(!curId||!isOwner)return;
+  const p=players[curId];
+  const newName=prompt('Nouveau nom :',p.name);
+  if(!newName||!newName.trim()||newName.trim()===p.name)return;
+  p.name=newName.trim().slice(0,20);
+  document.getElementById('cpNm').textContent=p.name;
+  await save();
+}
+
 async function delCurPlayer(){
   if(!curId||!isOwner)return;
   const p=players[curId];
