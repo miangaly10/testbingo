@@ -507,33 +507,7 @@
 
 <script>
 // ═══════ DATA ═══════
-let CELLS=[
-  {id:0,col:0,text:"Track Limits\nTemps supprimé\nen qualif",       tag:"QUALIF",    emoji:"⚠️",tc:null,       prob:"ph",pct:"95%"},
-  {id:1,col:1,text:"Chaos 1er Tour\nRed Flag\nImmédiat",            tag:"COURSE",    emoji:"🚩",tc:null,       prob:"ph",pct:"90%"},
-  {id:2,col:2,text:"Safety Car\ntardive\nLast Lap Drama",           tag:"DRAMA",     emoji:"🚗",tc:null,       prob:"ph",pct:"88%"},
-  {id:3,col:3,text:"+3 DNF\nMelbourne\nGP1",                        tag:"MELBOURNE", emoji:"💥",tc:null,       prob:"ph",pct:"85%"},
-  {id:4,col:4,text:"Pénalité 5s\nTrack Limit\nCourse",              tag:"PÉNALITÉ",  emoji:"⏱️",tc:null,       prob:"ph",pct:"92%"},
-  {id:5,col:0,text:"Radio Mème\nCharles\nLeclerc 😂",               tag:"FERRARI",   emoji:"📻",tc:"#DC0000",  prob:"ph",pct:"88%"},
-  {id:6,col:1,text:"Arrêt Raté\nUnsafe Release\nBox",               tag:"PITSTOP",   emoji:"🔧",tc:null,       prob:"ph",pct:"82%"},
-  {id:7,col:2,text:"Mauvaise\nStratégie\nSafety Car",               tag:"STRATEGY",  emoji:"📊",tc:null,       prob:"ph",pct:"87%"},
-  {id:8,col:3,text:"Perte 3 pos\nMauvais\nRestart",                 tag:"RESTART",   emoji:"📉",tc:null,       prob:"ph",pct:"80%"},
-  {id:9,col:4,text:"Consignes\nÉquipe\nSwap Position",              tag:"TEAM ORDER",emoji:"📣",tc:"#00D2BE",  prob:"ph",pct:"85%"},
-  {id:10,col:0,text:"Ferrari\nDouble\nPodium 🥇🥈",                  tag:"FERRARI",   emoji:"🏆",tc:"#DC0000",  prob:"ph",pct:"78%"},
-  {id:11,col:1,text:"Aston Martin\nDouble DNF\n💀💀",               tag:"ASTON",     emoji:"💀",tc:"#006F62",  prob:"pm",pct:"68%"},
-  {id:12,col:2,text:"Arvid\nTête-à-Queue\nSpectaculaire",           tag:"ROOKIE",    emoji:"🌀",tc:null,       prob:"pm",pct:"65%"},
-  {id:13,col:3,text:"George Russell\nGrand Chelem\n🎯",             tag:"MERCEDES",  emoji:"👑",tc:"#00D2BE",  prob:"pm",pct:"60%"},
-  {id:14,col:4,text:"Alpine\nTeammates\nCollide 💢",                tag:"ALPINE",    emoji:"💢",tc:"#FF69B4",  prob:"pm",pct:"72%"},
-  {id:15,col:0,text:"Williams\nPole Position\nSurprise! 😱",        tag:"WILLIAMS",  emoji:"😱",tc:"#00A3E0",  prob:"pm",pct:"55%"},
-  {id:16,col:1,text:"Pitlane Start\n→ Dans les\nPoints",            tag:"COMEBACK",  emoji:"🚀",tc:null,       prob:"pm",pct:"70%"},
-  {id:17,col:2,text:"Arvid bat\nLiam 4x\nRookie War",              tag:"ROOKIE",    emoji:"⚔️",tc:null,       prob:"pm",pct:"62%"},
-  {id:18,col:3,text:"Départ\nSous la Pluie\n🌧️",                   tag:"MÉTÉO",     emoji:"🌧️",tc:null,       prob:"ph",pct:"80%"},
-  {id:19,col:4,text:"RedBull\nFavori\nÉliminé Q1",                  tag:"REDBULL",   emoji:"💔",tc:"#1E41FF",  prob:"pm",pct:"58%"},
-  {id:20,col:0,text:"Alex Albon\nPremier\nPodium",                  tag:"WILLIAMS",  emoji:"🥉",tc:"#00A3E0",  prob:"pl",pct:"40%"},
-  {id:21,col:1,text:"Podium\nHaas/Williams\n/Alpine",               tag:"MIDFIELD",  emoji:"🏅",tc:null,       prob:"pl",pct:"45%"},
-  {id:22,col:2,text:"Ferrari\nTop 2\nConstructeurs",                tag:"FERRARI",   emoji:"🏗️",tc:"#DC0000",  prob:"pm",pct:"65%"},
-  {id:23,col:3,text:"Victoire\nAston/Williams\nHors Top 4",         tag:"SURPRISE",  emoji:"🎉",tc:null,       prob:"pl",pct:"35%"},
-  {id:24,col:4,text:"Arvid\nRemplacé par\nRéserviste",              tag:"RÉSERVE",   emoji:"🔄",tc:null,       prob:"pl",pct:"42%"},
-];
+let CELLS=Array.from({length:25},(_, i)=>({id:i,col:i%5,text:"",tag:"",emoji:"🏎️",tc:null,prob:"",pct:"",photo:null}));
 const DEFAULT_CELLS=JSON.parse(JSON.stringify(CELLS)); // copie de la grille par défaut
 
 const LINES=[
