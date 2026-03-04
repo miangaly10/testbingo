@@ -336,32 +336,26 @@ const GK='f1bingo2026_grid';
 // ═══════ STATE ═══════
 let players={},curId=null,doneLines=new Set(),selEmoji=EMOJIS[0],editMode=false,editIdx=null,editProb='ph';
 
-// ═══════ STORAGE ═══════
+// ═══════ STORAGE (localStorage) ═══════
 async function load(){
   try{
-    const r=await fetch('/api/data/'+SK);
-    const j=await r.json();
-    return j.value?JSON.parse(j.value):{};
+    const raw=localStorage.getItem(SK);
+    return raw?JSON.parse(raw):{};
   }catch{return{};}
 }
 async function save(){
-  try{
-    await fetch('/api/data/'+SK,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({value:JSON.stringify(players)})});
-  }catch{}
+  try{localStorage.setItem(SK,JSON.stringify(players));}catch{}
 }
 
 // ═══════ GRID STORAGE ═══════
 async function loadGrid(){
   try{
-    const r=await fetch('/api/data/'+GK);
-    const j=await r.json();
-    if(j.value){const saved=JSON.parse(j.value);if(Array.isArray(saved)&&saved.length===25){CELLS.splice(0,CELLS.length,...saved);}}
+    const raw=localStorage.getItem(GK);
+    if(raw){const saved=JSON.parse(raw);if(Array.isArray(saved)&&saved.length===25){CELLS.splice(0,CELLS.length,...saved);}}
   }catch{}
 }
 async function saveGrid(){
-  try{
-    await fetch('/api/data/'+GK,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({value:JSON.stringify(CELLS)})});
-  }catch{}
+  try{localStorage.setItem(GK,JSON.stringify(CELLS));}catch{}
 }
 
 // ═══════ INIT ═══════
