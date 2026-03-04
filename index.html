@@ -40,6 +40,24 @@
   .add-form input{flex:1;background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:12px 16px;color:var(--text);font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:600;letter-spacing:1px;outline:none;transition:border-color .2s;}
   .add-form input:focus{border-color:var(--red);}
   .add-form input::placeholder{color:var(--muted);}
+  .add-form-row{display:flex;gap:8px;width:100%;max-width:420px;}
+  .pin-input{width:80px!important;flex:none!important;text-align:center;font-size:18px!important;letter-spacing:6px!important;}
+
+  /* ── PIN MODAL ── */
+  #pinModal{display:none;position:fixed;inset:0;z-index:2100;background:rgba(0,0,0,.9);backdrop-filter:blur(10px);align-items:center;justify-content:center;}
+  #pinModal.show{display:flex;}
+  .pin-card{background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:30px;min-width:300px;max-width:380px;width:90%;text-align:center;}
+  .pin-title{font-family:'Russo One',sans-serif;font-size:22px;color:var(--gold);margin-bottom:6px;}
+  .pin-sub{font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--muted);letter-spacing:2px;margin-bottom:18px;}
+  .pin-field{display:flex;justify-content:center;gap:8px;margin-bottom:18px;}
+  .pin-digit{width:48px;height:56px;background:var(--darker);border:2px solid var(--border);border-radius:10px;color:var(--text);font-family:'Russo One',sans-serif;font-size:24px;text-align:center;outline:none;transition:border-color .2s;}
+  .pin-digit:focus{border-color:var(--gold);}
+  .pin-error{font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--red);letter-spacing:1px;min-height:18px;margin-bottom:10px;}
+  .pin-actions{display:flex;gap:10px;justify-content:center;}
+  .p-lock{font-size:12px;color:var(--muted);margin-left:4px;}
+
+  /* view-only badge */
+  .view-badge{display:inline-block;background:rgba(255,165,0,.15);border:1px solid rgba(255,165,0,.3);color:#ffaa00;font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:3px 10px;border-radius:4px;margin-left:8px;}
 
   /* ── SCOREBOARD MODAL ── */
   #sbModal{display:none;position:fixed;inset:0;z-index:1500;background:rgba(0,0,0,.85);backdrop-filter:blur(8px);align-items:center;justify-content:center;}
@@ -277,8 +295,29 @@
   <div class="ps-divider">— Nouveau Joueur —</div>
   <div class="emoji-picker" id="emojiPicker"></div>
   <div class="add-form">
-    <input id="newName" placeholder="Votre prénom..." maxlength="20"/>
+    <input id="newName" placeholder="Prénom..." maxlength="20"/>
+    <input id="newPin" class="pin-input" placeholder="PIN" maxlength="4" type="password" inputmode="numeric"/>
     <button class="btn bp" onclick="addPlayer()">+ Ajouter</button>
+  </div>
+</div>
+
+<!-- ══ PIN LOGIN MODAL ══ -->
+<div id="pinModal">
+  <div class="pin-card">
+    <div class="pin-title" id="pinTitle">🔐 Connexion</div>
+    <div class="pin-sub" id="pinPlayer">Entrez votre PIN</div>
+    <div class="pin-field">
+      <input class="pin-digit" id="pd1" type="password" inputmode="numeric" maxlength="1" autocomplete="off"/>
+      <input class="pin-digit" id="pd2" type="password" inputmode="numeric" maxlength="1" autocomplete="off"/>
+      <input class="pin-digit" id="pd3" type="password" inputmode="numeric" maxlength="1" autocomplete="off"/>
+      <input class="pin-digit" id="pd4" type="password" inputmode="numeric" maxlength="1" autocomplete="off"/>
+    </div>
+    <div class="pin-error" id="pinErr"></div>
+    <div class="pin-actions">
+      <button class="btn bs" onclick="closePinModal()">Annuler</button>
+      <button class="btn bp" onclick="submitPin()">Valider</button>
+      <button class="btn bs" onclick="viewOnly()" style="font-size:11px;padding:8px 14px;">👁️ Voir seulement</button>
+    </div>
   </div>
 </div>
 
@@ -365,7 +404,8 @@
       </div>
     </div>
     <button class="cp-sw" onclick="switchPlayer()">⇄ Changer</button>
-    <button class="btn bd" onclick="delCurPlayer()">🗑️ Supprimer joueur</button>
+    <button class="btn bd" id="btnDelPlayer" onclick="delCurPlayer()">🗑️ Supprimer</button>
+    <span class="view-badge" id="viewBadge" style="display:none">👁️ Lecture seule</span>
   </div>
 
   <div class="stats-row">
@@ -393,8 +433,8 @@
   <div class="drag-hint" id="dragHint">🔀 Glissez les cases pour les réorganiser — sauvegarde auto</div>
 
   <div class="controls">
-    <button class="btn bg" onclick="toggleEditMode()">✏️ <span id="editModeLabel">Modifier la grille</span></button>
-    <button class="btn bs" onclick="resetMe()">↺ Réinitialiser ma grille</button>
+    <button class="btn bg" id="btnEditGrid" onclick="toggleEditMode()">✏️ <span id="editModeLabel">Modifier la grille</span></button>
+    <button class="btn bs" id="btnResetGrid" onclick="resetMe()">↺ Réinitialiser ma grille</button>
   </div>
 </div>
 
@@ -450,6 +490,8 @@ const FB='https://f1-bingo-2026-e8299-default-rtdb.europe-west1.firebasedatabase
 // ═══════ STATE ═══════
 let players={},curId=null,doneLines=new Set(),selEmoji=EMOJIS[0],editMode=false,editIdx=null,editProb='ph';
 let dragSrcIdx=null,touchDragEl=null;
+let isOwner=false; // true if logged in with correct PIN
+let pendingLoginId=null;
 
 // ═══════ STORAGE (Firebase Realtime DB) ═══════
 async function load(){
@@ -494,6 +536,13 @@ async function init(){
   players=await load();
   renderList();
   document.getElementById('newName').addEventListener('keydown',e=>{if(e.key==='Enter')addPlayer();});
+  document.getElementById('newPin').addEventListener('keydown',e=>{if(e.key==='Enter')addPlayer();});
+  // PIN digit auto-focus
+  ['pd1','pd2','pd3','pd4'].forEach((id,i,arr)=>{
+    const el=document.getElementById(id);
+    el.addEventListener('input',()=>{if(el.value.length===1&&i<3)document.getElementById(arr[i+1]).focus();});
+    el.addEventListener('keydown',e=>{if(e.key==='Backspace'&&!el.value&&i>0){document.getElementById(arr[i-1]).focus();}if(e.key==='Enter')submitPin();});
+  });
 }
 
 // ═══════ PLAYER SCREEN ═══════
@@ -509,29 +558,76 @@ function buildEmoji(){
 function renderList(){
   const el=document.getElementById('playerList');
   const ps=Object.values(players).sort((a,b)=>(b.score||0)-(a.score||0));
-  if(!ps.length){el.innerHTML='<div style="text-align:center;color:var(--muted);font-family:\'Barlow Condensed\',sans-serif;font-size:13px;letter-spacing:2px;padding:10px;">Aucun joueur — créez votre profil !</div>';return;}
+  if(!ps.length){el.innerHTML='<div style="text-align:center;color:var(--muted);font-family:&#39;Barlow Condensed&#39;,sans-serif;font-size:13px;letter-spacing:2px;padding:10px;">Aucun joueur — créez votre profil !</div>';return;}
   el.innerHTML=ps.map(p=>`
-    <div class="player-item" onclick="selectP('${p.id}')">
+    <div class="player-item" onclick="loginP('${p.id}')">
       <div class="p-avatar">${p.emoji}</div>
       <div class="p-info">
-        <div class="p-name">${p.name}</div>
+        <div class="p-name">${p.name} <span class="p-lock">🔒</span></div>
         <div class="p-stats">${p.checked?.length||0}/25 cochés · ${p.lines||0} lignes</div>
       </div>
       <div class="p-score">${p.score||0} pts</div>
-      <button class="p-del" onclick="delP('${p.id}',event)">✕</button>
     </div>`).join('');
 }
 
-async function addPlayer(){
-  const n=document.getElementById('newName').value.trim();if(!n)return;
-  const id='p'+Date.now();
-  players[id]={id,name:n,emoji:selEmoji,checked:[],score:0,lines:0,doneLines:[],grid:JSON.parse(JSON.stringify(DEFAULT_CELLS))};
-  await save();document.getElementById('newName').value='';renderList();
+// ═══════ SIMPLE HASH ═══════
+function hashPin(pin){
+  let h=0;for(let i=0;i<pin.length;i++){h=((h<<5)-h)+pin.charCodeAt(i);h|=0;}
+  return 'h'+Math.abs(h).toString(36);
 }
 
-async function delP(id,e){
-  e.stopPropagation();if(!confirm('Supprimer ce joueur ?'))return;
-  delete players[id];await save();renderList();
+async function addPlayer(){
+  const n=document.getElementById('newName').value.trim();
+  const pin=document.getElementById('newPin').value.trim();
+  if(!n){alert('Entrez un prénom');return;}
+  if(!pin||pin.length!==4||!/^\d{4}$/.test(pin)){alert('Le PIN doit être exactement 4 chiffres');return;}
+  const id='p'+Date.now();
+  players[id]={id,name:n,emoji:selEmoji,pin:hashPin(pin),checked:[],score:0,lines:0,doneLines:[],grid:JSON.parse(JSON.stringify(DEFAULT_CELLS))};
+  await save();document.getElementById('newName').value='';document.getElementById('newPin').value='';renderList();
+}
+
+// ═══════ PIN LOGIN ═══════
+function loginP(id){
+  pendingLoginId=id;
+  const p=players[id];
+  document.getElementById('pinTitle').textContent=`🔐 ${p.emoji} ${p.name}`;
+  document.getElementById('pinPlayer').textContent='Entrez votre PIN pour vous connecter';
+  document.getElementById('pinErr').textContent='';
+  ['pd1','pd2','pd3','pd4'].forEach(x=>document.getElementById(x).value='');
+  document.getElementById('pinModal').classList.add('show');
+  setTimeout(()=>document.getElementById('pd1').focus(),100);
+}
+
+function closePinModal(){
+  document.getElementById('pinModal').classList.remove('show');
+  pendingLoginId=null;
+}
+
+function getEnteredPin(){
+  return ['pd1','pd2','pd3','pd4'].map(x=>document.getElementById(x).value).join('');
+}
+
+function submitPin(){
+  const pin=getEnteredPin();
+  if(pin.length!==4){document.getElementById('pinErr').textContent='Entrez 4 chiffres';return;}
+  const p=players[pendingLoginId];
+  if(!p)return;
+  if(hashPin(pin)===p.pin){
+    isOwner=true;
+    closePinModal();
+    selectP(pendingLoginId);
+  } else {
+    document.getElementById('pinErr').textContent='❌ PIN incorrect';
+    ['pd1','pd2','pd3','pd4'].forEach(x=>document.getElementById(x).value='');
+    document.getElementById('pd1').focus();
+  }
+}
+
+function viewOnly(){
+  if(!pendingLoginId)return;
+  isOwner=false;
+  closePinModal();
+  selectP(pendingLoginId);
 }
 
 function selectP(id){
@@ -546,13 +642,18 @@ function selectP(id){
   editMode=false;
   document.getElementById('editModeLabel').textContent='Modifier la grille';
   document.getElementById('dragHint').classList.remove('show');
+  // Show/hide owner-only controls
+  document.getElementById('btnDelPlayer').style.display=isOwner?'':'none';
+  document.getElementById('btnEditGrid').style.display=isOwner?'':'none';
+  document.getElementById('btnResetGrid').style.display=isOwner?'':'none';
+  document.getElementById('viewBadge').style.display=isOwner?'none':'';
   buildGrid();applyChecked();updateUI();applyLines(false);
 }
 
 function switchPlayer(){
   document.getElementById('mainApp').style.display='none';
   document.getElementById('playerScreen').style.display='flex';
-  curId=null;doneLines=new Set();renderList();
+  curId=null;doneLines=new Set();isOwner=false;renderList();
 }
 
 // ═══════ GRID ═══════
@@ -640,7 +741,7 @@ function applyChecked(){
 }
 
 async function toggle(i){
-  if(!curId)return;
+  if(!curId||!isOwner)return;
   const p=players[curId];const ch=new Set(p.checked);
   if(ch.has(i)){ch.delete(i);p.score=Math.max(0,(p.score||0)-SM[CELLS[i].prob]);document.getElementById(`c${i}`).classList.remove('checked');}
   else{ch.add(i);p.score=(p.score||0)+SM[CELLS[i].prob];const el=document.getElementById(`c${i}`);el.classList.add('checked');el.style.transform='scale(1.08)';setTimeout(()=>el.style.transform='',200);}
@@ -680,7 +781,7 @@ async function applyLines(anim){
 }
 
 async function resetMe(){
-  if(!curId||!confirm('Réinitialiser votre grille ?'))return;
+  if(!curId||!isOwner||!confirm('Réinitialiser votre grille ?'))return;
   const p=players[curId];p.checked=[];p.score=0;p.lines=0;p.doneLines=[];doneLines=new Set();await save();
   CELLS.forEach((_,i)=>document.getElementById(`c${i}`)?.classList.remove('checked','bline'));
   LINES.forEach(l=>document.getElementById(lineEls[l.id])?.classList.remove('done'));
@@ -689,7 +790,7 @@ async function resetMe(){
 
 // ═══════ DELETE CURRENT PLAYER ═══════
 async function delCurPlayer(){
-  if(!curId)return;
+  if(!curId||!isOwner)return;
   const p=players[curId];
   if(!confirm(`Supprimer le joueur « ${p.name} » et toutes ses données ?`))return;
   delete players[curId];
@@ -699,6 +800,7 @@ async function delCurPlayer(){
 
 // ═══════ EDIT MODE ═══════
 function toggleEditMode(){
+  if(!isOwner)return;
   editMode=!editMode;
   document.getElementById('editModeLabel').textContent=editMode?'Terminer édition':'Modifier la grille';
   document.getElementById('dragHint').classList.toggle('show',editMode);
