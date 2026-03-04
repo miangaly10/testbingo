@@ -427,6 +427,7 @@ let CELLS=[
   {id:23,col:3,text:"Victoire\nAston/Williams\nHors Top 4",         tag:"SURPRISE",  emoji:"🎉",tc:null,       prob:"pl",pct:"35%"},
   {id:24,col:4,text:"Arvid\nRemplacé par\nRéserviste",              tag:"RÉSERVE",   emoji:"🔄",tc:null,       prob:"pl",pct:"42%"},
 ];
+const DEFAULT_CELLS=JSON.parse(JSON.stringify(CELLS)); // copie de la grille par défaut
 
 const LINES=[
   {id:'r0',els:[0,1,2,3,4]},{id:'r1',els:[5,6,7,8,9]},{id:'r2',els:[10,11,12,13,14]},
@@ -439,10 +440,9 @@ const lineEls={r0:'lr0',r1:'lr1',r2:'lr2',r3:'lr3',r4:'lr4',c0:'lc0',c1:'lc1',c2
 const SM={ph:10,pm:15,pl:25};
 const EMOJIS=['🏎️','🏁','🔴','🟠','🟡','🟢','🔵','🚀','👑','🏆','⚡','🎯','🔥','💎','🌟','🦁','🐺','🦊','🐉','🎮'];
 const SK='players';
-const GK='grid';
 
 // ══════════════════════════════════════════════════
-// 🔥 FIREBASE CONFIG — Remplace l'URL ci-dessous
+// 🔥 FIREBASE CONFIG
 // ══════════════════════════════════════════════════
 const FB='https://f1-bingo-2026-e8299-default-rtdb.europe-west1.firebasedatabase.app';
 // ══════════════════════════════════════════════════
@@ -458,42 +458,39 @@ async function load(){
     const data=await r.json();
     return data||{};
   }catch{
-    // Fallback localStorage si Firebase indispo
     try{const raw=localStorage.getItem('f1_'+SK);return raw?JSON.parse(raw):{};}catch{return{};}
   }
 }
 async function save(){
   try{
     await fetch(`${FB}/f1bingo/${SK}.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(players)});
-    localStorage.setItem('f1_'+SK,JSON.stringify(players)); // backup local
+    localStorage.setItem('f1_'+SK,JSON.stringify(players));
   }catch{
     try{localStorage.setItem('f1_'+SK,JSON.stringify(players));}catch{}
   }
 }
 
-// ═══════ GRID STORAGE ═══════
-async function loadGrid(){
-  try{
-    const r=await fetch(`${FB}/f1bingo/${GK}.json`);
-    const saved=await r.json();
-    if(Array.isArray(saved)&&saved.length===25){CELLS.splice(0,CELLS.length,...saved);}
-  }catch{
-    try{const raw=localStorage.getItem('f1_'+GK);if(raw){const saved=JSON.parse(raw);if(Array.isArray(saved)&&saved.length===25){CELLS.splice(0,CELLS.length,...saved);}}}catch{}
+// ═══════ GRID STORAGE (per player) ═══════
+function loadPlayerGrid(){
+  if(!curId)return;
+  const p=players[curId];
+  if(p.grid&&Array.isArray(p.grid)&&p.grid.length===25){
+    CELLS.splice(0,CELLS.length,...JSON.parse(JSON.stringify(p.grid)));
+  } else {
+    // Nouveau joueur ou pas de grille → copier la grille par défaut
+    CELLS.splice(0,CELLS.length,...JSON.parse(JSON.stringify(DEFAULT_CELLS)));
+    p.grid=JSON.parse(JSON.stringify(DEFAULT_CELLS));
   }
 }
 async function saveGrid(){
-  try{
-    await fetch(`${FB}/f1bingo/${GK}.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(CELLS)});
-    localStorage.setItem('f1_'+GK,JSON.stringify(CELLS));
-  }catch{
-    try{localStorage.setItem('f1_'+GK,JSON.stringify(CELLS));}catch{}
-  }
+  if(!curId)return;
+  players[curId].grid=JSON.parse(JSON.stringify(CELLS));
+  await save();
 }
 
 // ═══════ INIT ═══════
 async function init(){
   buildEmoji();
-  await loadGrid();
   players=await load();
   renderList();
   document.getElementById('newName').addEventListener('keydown',e=>{if(e.key==='Enter')addPlayer();});
@@ -528,7 +525,7 @@ function renderList(){
 async function addPlayer(){
   const n=document.getElementById('newName').value.trim();if(!n)return;
   const id='p'+Date.now();
-  players[id]={id,name:n,emoji:selEmoji,checked:[],score:0,lines:0,doneLines:[]};
+  players[id]={id,name:n,emoji:selEmoji,checked:[],score:0,lines:0,doneLines:[],grid:JSON.parse(JSON.stringify(DEFAULT_CELLS))};
   await save();document.getElementById('newName').value='';renderList();
 }
 
@@ -541,10 +538,14 @@ function selectP(id){
   curId=id;
   const p=players[id];
   doneLines=new Set(p.doneLines||[]);
+  loadPlayerGrid();
   document.getElementById('playerScreen').style.display='none';
   document.getElementById('mainApp').style.display='block';
   document.getElementById('cpNm').textContent=p.name;
   document.getElementById('cpAv').textContent=p.emoji;
+  editMode=false;
+  document.getElementById('editModeLabel').textContent='Modifier la grille';
+  document.getElementById('dragHint').classList.remove('show');
   buildGrid();applyChecked();updateUI();applyLines(false);
 }
 
