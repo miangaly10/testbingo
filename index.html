@@ -151,6 +151,14 @@
   .prob-opt.sel-pm{border-color:#ffaa00;background:rgba(255,165,0,.15);color:#ffaa00;}
   .prob-opt.sel-pl{border-color:#ff6666;background:rgba(200,50,50,.15);color:#ff6666;}
 
+  /* ── DRAG & DROP ── */
+  .cell.dragging{opacity:.4;transform:scale(.92);border:2px dashed var(--gold);z-index:10;}
+  .cell.drag-over{border:2px solid var(--gold);background:rgba(255,215,0,.12);transform:scale(1.05);box-shadow:0 0 24px rgba(255,215,0,.35);}
+  .cell.drag-mode{cursor:grab;}
+  .cell.drag-mode:active{cursor:grabbing;}
+  .drag-hint{text-align:center;font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-bottom:10px;display:none;}
+  .drag-hint.show{display:block;animation:fadeIn .3s ease;}
+
   #cfv{position:fixed;inset:0;pointer-events:none;z-index:999;}
 
   /* ═══ MOBILE RESPONSIVE ═══ */
@@ -382,6 +390,7 @@
     <div class="bl">B</div><div class="bl">I</div><div class="bl">N</div><div class="bl">G</div><div class="bl">O</div>
   </div>
   <div class="bingo-grid" id="bingoGrid"></div>
+  <div class="drag-hint" id="dragHint">🔀 Glissez les cases pour les réorganiser — sauvegarde auto</div>
 
   <div class="controls">
     <button class="btn bg" onclick="toggleEditMode()">✏️ <span id="editModeLabel">Modifier la grille</span></button>
@@ -440,6 +449,7 @@ const FB='https://f1-bingo-2026-e8299-default-rtdb.europe-west1.firebasedatabase
 
 // ═══════ STATE ═══════
 let players={},curId=null,doneLines=new Set(),selEmoji=EMOJIS[0],editMode=false,editIdx=null,editProb='ph';
+let dragSrcIdx=null,touchDragEl=null;
 
 // ═══════ STORAGE (Firebase Realtime DB) ═══════
 async function load(){
@@ -549,16 +559,79 @@ function buildGrid(){
   const g=document.getElementById('bingoGrid');g.innerHTML='';
   CELLS.forEach((c,i)=>{
     const d=document.createElement('div');
-    d.className=`cell col-${c.col}`;d.id=`c${i}`;
+    d.className=`cell col-${c.col}${editMode?' drag-mode':''}`;d.id=`c${i}`;
+    d.draggable=editMode;
     d.onclick=()=>{if(editMode)openEdit(i);else toggle(i);};
     d.innerHTML=`
       <span class="pbadge ${c.prob}">${c.pct}</span>
       <div class="clogo" style="background:${c.tc?c.tc+'22':'rgba(255,255,255,.05)'};border:1px solid ${c.tc||'rgba(255,255,255,.08)'}"><span style="font-size:20px">${c.emoji}</span></div>
       <div class="ctxt">${c.text.replace(/\n/g,'<br>')}</div>
       <div class="ctag">${c.tag}</div>`;
+    // Drag events (desktop)
+    d.addEventListener('dragstart',e=>{if(!editMode)return;dragSrcIdx=i;d.classList.add('dragging');e.dataTransfer.effectAllowed='move';});
+    d.addEventListener('dragend',()=>{d.classList.remove('dragging');dragSrcIdx=null;g.querySelectorAll('.cell').forEach(c=>c.classList.remove('drag-over'));});
+    d.addEventListener('dragover',e=>{if(!editMode||dragSrcIdx===null||dragSrcIdx===i)return;e.preventDefault();e.dataTransfer.dropEffect='move';d.classList.add('drag-over');});
+    d.addEventListener('dragleave',()=>d.classList.remove('drag-over'));
+    d.addEventListener('drop',e=>{e.preventDefault();d.classList.remove('drag-over');if(dragSrcIdx===null||dragSrcIdx===i)return;swapCells(dragSrcIdx,i);});
+    // Touch drag (mobile)
+    d.addEventListener('touchstart',handleTouchStart,{passive:false});
+    d.addEventListener('touchmove',handleTouchMove,{passive:false});
+    d.addEventListener('touchend',handleTouchEnd);
     g.appendChild(d);
   });
 }
+
+// ═══════ DRAG: SWAP & SAVE ═══════
+async function swapCells(a,b){
+  // Swap in CELLS array
+  const tmp={...CELLS[a]};Object.assign(CELLS[a],CELLS[b]);Object.assign(CELLS[b],tmp);
+  // Fix ids & cols based on position
+  CELLS[a].id=a;CELLS[a].col=a%5;
+  CELLS[b].id=b;CELLS[b].col=b%5;
+  await saveGrid();
+  buildGrid();applyChecked();applyLines(false);
+}
+
+// ═══════ TOUCH DRAG (mobile) ═══════
+let touchStartTimer=null,touchDragging=false,touchSrcIdx=null;
+function handleTouchStart(e){
+  if(!editMode)return;
+  const i=getCellIdx(e.currentTarget);
+  touchSrcIdx=i;
+  touchDragging=false;
+  // Long-press to drag (300ms), short tap = edit
+  touchStartTimer=setTimeout(()=>{
+    touchDragging=true;
+    e.currentTarget.classList.add('dragging');
+    // Prevent scroll
+  },300);
+}
+function handleTouchMove(e){
+  if(!editMode||!touchDragging){if(!touchDragging)clearTimeout(touchStartTimer);return;}
+  e.preventDefault();
+  const touch=e.touches[0];
+  const el=document.elementFromPoint(touch.clientX,touch.clientY);
+  // Highlight drop target
+  document.querySelectorAll('.cell').forEach(c=>c.classList.remove('drag-over'));
+  const target=el?.closest('.cell');
+  if(target&&getCellIdx(target)!==touchSrcIdx)target.classList.add('drag-over');
+}
+function handleTouchEnd(e){
+  clearTimeout(touchStartTimer);
+  if(!editMode)return;
+  if(touchDragging){
+    // Find drop target
+    const touch=e.changedTouches[0];
+    const el=document.elementFromPoint(touch.clientX,touch.clientY);
+    const target=el?.closest('.cell');
+    const targetIdx=target?getCellIdx(target):null;
+    document.querySelectorAll('.cell').forEach(c=>c.classList.remove('dragging','drag-over'));
+    if(targetIdx!==null&&targetIdx!==touchSrcIdx)swapCells(touchSrcIdx,targetIdx);
+    touchDragging=false;touchSrcIdx=null;
+    e.preventDefault(); // prevent click after drag
+  }
+}
+function getCellIdx(el){return parseInt(el.id?.replace('c',''),10);}
 
 function applyChecked(){
   const ch=new Set(players[curId]?.checked||[]);
@@ -627,10 +700,8 @@ async function delCurPlayer(){
 function toggleEditMode(){
   editMode=!editMode;
   document.getElementById('editModeLabel').textContent=editMode?'Terminer édition':'Modifier la grille';
-  document.querySelectorAll('.cell').forEach(c=>{
-    c.style.outline=editMode?'2px dashed rgba(255,215,0,.4)':'';
-    c.style.cursor=editMode?'cell':'pointer';
-  });
+  document.getElementById('dragHint').classList.toggle('show',editMode);
+  buildGrid();applyChecked();applyLines(false);
 }
 
 function openEdit(i){
