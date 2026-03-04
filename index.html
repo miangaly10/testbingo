@@ -523,45 +523,46 @@ const lineEls={r0:'lr0',r1:'lr1',r2:'lr2',r3:'lr3',r4:'lr4',c0:'lc0',c1:'lc1',c2
 const SM={ph:10,pm:15,pl:25};
 const EMOJIS=['🏎️','🏁','🔴','🟠','🟡','🟢','🔵','🚀','👑','🏆','⚡','🎯','🔥','💎','🌟','🦁','🐺','🦊','🐉','🎮'];
 
-const F1_IMG='https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers';
+const F1_IMG='https://media.formula1.com/image/upload/f_auto,c_limit,q_75,w_1320/content/dam/fom-website/drivers';
+const F1_LOGO='https://media.formula1.com/image/upload/c_fit,h_64/q_auto/v1740000000/common/f1';
 
 const F1_TEAMS=[
-  {code:'RBR',name:'Red Bull Racing',color:'#3671C6'},
-  {code:'FER',name:'Ferrari',color:'#E8002D'},
-  {code:'MCL',name:'McLaren',color:'#FF8000'},
-  {code:'MER',name:'Mercedes',color:'#27F4D2'},
-  {code:'AST',name:'Aston Martin',color:'#229971'},
-  {code:'ALP',name:'Alpine',color:'#FF87BC'},
-  {code:'WIL',name:'Williams',color:'#64C4FF'},
-  {code:'RB',name:'Racing Bulls',color:'#6692FF'},
-  {code:'AUD',name:'Audi',color:'#FF0000'},
-  {code:'HAA',name:'Haas',color:'#B6BABD'},
-  {code:'CAD',name:'Cadillac',color:'#CFB991'},
+  {code:'RBR',name:'Red Bull Racing',color:'#3671C6',logo:`${F1_LOGO}/2025/redbullracing/2025redbullracinglogowhite.webp`},
+  {code:'FER',name:'Ferrari',color:'#E8002D',logo:`${F1_LOGO}/2025/ferrari/2025ferrarilogolight.webp`},
+  {code:'MCL',name:'McLaren',color:'#FF8000',logo:`${F1_LOGO}/2025/mclaren/2025mclarenlogowhite.webp`},
+  {code:'MER',name:'Mercedes',color:'#27F4D2',logo:`${F1_LOGO}/2025/mercedes/2025mercedeslogowhite.webp`},
+  {code:'AST',name:'Aston Martin',color:'#229971',logo:`${F1_LOGO}/2025/astonmartin/2025astonmartinlogowhite.webp`},
+  {code:'ALP',name:'Alpine',color:'#FF87BC',logo:`${F1_LOGO}/2025/alpine/2025alpinelogowhite.webp`},
+  {code:'WIL',name:'Williams',color:'#64C4FF',logo:`${F1_LOGO}/2025/williams/2025williamslogowhite.webp`},
+  {code:'RB',name:'Racing Bulls',color:'#6692FF',logo:`${F1_LOGO}/2025/racingbulls/2025racingbullslogowhite.webp`},
+  {code:'AUD',name:'Audi',color:'#FF0000',logo:`${F1_LOGO}/2026/audi/2026audilogowhite.webp`},
+  {code:'HAA',name:'Haas',color:'#B6BABD',logo:`${F1_LOGO}/2025/haas/2025haaslogowhite.webp`},
+  {code:'CAD',name:'Cadillac',color:'#CFB991',logo:`${F1_LOGO}/2026/cadillac/2026cadillaclogowhite.webp`},
 ];
 
 const F1_DRIVERS=[
-  {num:'3',code:'VER',first:'Max',last:'Verstappen',team:'RBR',color:'#3671C6',img:`${F1_IMG}/V/MAXVER01_Max_Verstappen/maxver01.png`},
-  {num:'20',code:'HAD',first:'Isack',last:'Hadjar',team:'RBR',color:'#3671C6',img:`${F1_IMG}/H/ISAHAD01_Isack_Hadjar/isahad01.png`},
-  {num:'16',code:'LEC',first:'Charles',last:'Leclerc',team:'FER',color:'#E8002D',img:`${F1_IMG}/L/CHALEC01_Charles_Leclerc/chalec01.png`},
-  {num:'44',code:'HAM',first:'Lewis',last:'Hamilton',team:'FER',color:'#E8002D',img:`${F1_IMG}/H/LEWHAM01_Lewis_Hamilton/lewham01.png`},
-  {num:'1',code:'NOR',first:'Lando',last:'Norris',team:'MCL',color:'#FF8000',img:`${F1_IMG}/N/LANNOR01_Lando_Norris/lannor01.png`},
-  {num:'81',code:'PIA',first:'Oscar',last:'Piastri',team:'MCL',color:'#FF8000',img:`${F1_IMG}/P/OSCPIA01_Oscar_Piastri/oscpia01.png`},
-  {num:'63',code:'RUS',first:'George',last:'Russell',team:'MER',color:'#27F4D2',img:`${F1_IMG}/R/GEORUS01_George_Russell/georus01.png`},
-  {num:'12',code:'ANT',first:'Kimi',last:'Antonelli',team:'MER',color:'#27F4D2',img:`${F1_IMG}/A/KIMANT01_Kimi_Antonelli/kimant01.png`},
-  {num:'14',code:'ALO',first:'Fernando',last:'Alonso',team:'AST',color:'#229971',img:`${F1_IMG}/A/FERALO01_Fernando_Alonso/feralo01.png`},
-  {num:'18',code:'STR',first:'Lance',last:'Stroll',team:'AST',color:'#229971',img:`${F1_IMG}/S/LANSTR01_Lance_Stroll/lanstr01.png`},
-  {num:'10',code:'GAS',first:'Pierre',last:'Gasly',team:'ALP',color:'#FF87BC',img:`${F1_IMG}/G/PIEGAS01_Pierre_Gasly/piegas01.png`},
-  {num:'43',code:'COL',first:'Franco',last:'Colapinto',team:'ALP',color:'#FF87BC',img:`${F1_IMG}/C/FRACOL01_Franco_Colapinto/fracol01.png`},
+  {num:'3',code:'VER',first:'Max',last:'Verstappen',team:'RBR',color:'#3671C6',img:`${F1_IMG}/M/MAXVER01_Max_Verstappen/maxver01.png`},
+  {num:'20',code:'HAD',first:'Isack',last:'Hadjar',team:'RBR',color:'#3671C6',img:`${F1_IMG}/I/ISAHAD01_Isack_Hadjar/isahad01.png`},
+  {num:'16',code:'LEC',first:'Charles',last:'Leclerc',team:'FER',color:'#E8002D',img:`${F1_IMG}/C/CHALEC01_Charles_Leclerc/chalec01.png`},
+  {num:'44',code:'HAM',first:'Lewis',last:'Hamilton',team:'FER',color:'#E8002D',img:`${F1_IMG}/L/LEWHAM01_Lewis_Hamilton/lewham01.png`},
+  {num:'1',code:'NOR',first:'Lando',last:'Norris',team:'MCL',color:'#FF8000',img:`${F1_IMG}/L/LANNOR01_Lando_Norris/lannor01.png`},
+  {num:'81',code:'PIA',first:'Oscar',last:'Piastri',team:'MCL',color:'#FF8000',img:`${F1_IMG}/O/OSCPIA01_Oscar_Piastri/oscpia01.png`},
+  {num:'63',code:'RUS',first:'George',last:'Russell',team:'MER',color:'#27F4D2',img:`${F1_IMG}/G/GEORUS01_George_Russell/georus01.png`},
+  {num:'12',code:'ANT',first:'Kimi',last:'Antonelli',team:'MER',color:'#27F4D2',img:`${F1_IMG}/K/KIMANT01_Kimi_Antonelli/kimant01.png`},
+  {num:'14',code:'ALO',first:'Fernando',last:'Alonso',team:'AST',color:'#229971',img:`${F1_IMG}/F/FERALO01_Fernando_Alonso/feralo01.png`},
+  {num:'18',code:'STR',first:'Lance',last:'Stroll',team:'AST',color:'#229971',img:`${F1_IMG}/L/LANSTR01_Lance_Stroll/lanstr01.png`},
+  {num:'10',code:'GAS',first:'Pierre',last:'Gasly',team:'ALP',color:'#FF87BC',img:`${F1_IMG}/P/PIEGAS01_Pierre_Gasly/piegas01.png`},
+  {num:'43',code:'COL',first:'Franco',last:'Colapinto',team:'ALP',color:'#FF87BC',img:`${F1_IMG}/F/FRACOL01_Franco_Colapinto/fracol01.png`},
   {num:'23',code:'ALB',first:'Alexander',last:'Albon',team:'WIL',color:'#64C4FF',img:`${F1_IMG}/A/ALEALB01_Alexander_Albon/alealb01.png`},
-  {num:'55',code:'SAI',first:'Carlos',last:'Sainz',team:'WIL',color:'#64C4FF',img:`${F1_IMG}/S/CARSAI01_Carlos_Sainz/carsai01.png`},
-  {num:'22',code:'TSU',first:'Yuki',last:'Tsunoda',team:'RB',color:'#6692FF',img:`${F1_IMG}/T/YUKTSU01_Yuki_Tsunoda/yuktsu01.png`},
+  {num:'55',code:'SAI',first:'Carlos',last:'Sainz',team:'WIL',color:'#64C4FF',img:`${F1_IMG}/C/CARSAI01_Carlos_Sainz/carsai01.png`},
   {num:'30',code:'LAW',first:'Liam',last:'Lawson',team:'RB',color:'#6692FF',img:`${F1_IMG}/L/LIALAW01_Liam_Lawson/lialaw01.png`},
-  {num:'27',code:'HUL',first:'Nico',last:'Hulkenberg',team:'AUD',color:'#FF0000',img:`${F1_IMG}/H/NICHUL01_Nico_Hulkenberg/nichul01.png`},
-  {num:'5',code:'BOR',first:'Gabriel',last:'Bortoleto',team:'AUD',color:'#FF0000',img:`${F1_IMG}/B/GABBOR01_Gabriel_Bortoleto/gabbor01.png`},
-  {num:'31',code:'OCO',first:'Esteban',last:'Ocon',team:'HAA',color:'#B6BABD',img:`${F1_IMG}/O/ESTOCO01_Esteban_Ocon/estoco01.png`},
-  {num:'87',code:'BEA',first:'Oliver',last:'Bearman',team:'HAA',color:'#B6BABD',img:`${F1_IMG}/B/OLIBEA01_Oliver_Bearman/olibea01.png`},
-  {num:'11',code:'PER',first:'Sergio',last:'Perez',team:'CAD',color:'#CFB991',img:`${F1_IMG}/P/SERPER01_Sergio_Perez/serper01.png`},
-  {num:'77',code:'BOT',first:'Valtteri',last:'Bottas',team:'CAD',color:'#CFB991',img:`${F1_IMG}/B/VALBOT01_Valtteri_Bottas/valbot01.png`},
+  {num:'40',code:'LIN',first:'Arvid',last:'Lindblad',team:'RB',color:'#6692FF',img:`${F1_IMG}/A/ARVLIN01_Arvid_Lindblad/arvlin01.png`},
+  {num:'27',code:'HUL',first:'Nico',last:'Hulkenberg',team:'AUD',color:'#FF0000',img:`${F1_IMG}/N/NICHUL01_Nico_Hulkenberg/nichul01.png`},
+  {num:'5',code:'BOR',first:'Gabriel',last:'Bortoleto',team:'AUD',color:'#FF0000',img:`${F1_IMG}/G/GABBOR01_Gabriel_Bortoleto/gabbor01.png`},
+  {num:'31',code:'OCO',first:'Esteban',last:'Ocon',team:'HAA',color:'#B6BABD',img:`${F1_IMG}/E/ESTOCO01_Esteban_Ocon/estoco01.png`},
+  {num:'87',code:'BEA',first:'Oliver',last:'Bearman',team:'HAA',color:'#B6BABD',img:`${F1_IMG}/O/OLIBEA01_Oliver_Bearman/olibea01.png`},
+  {num:'11',code:'PER',first:'Sergio',last:'Perez',team:'CAD',color:'#CFB991',img:`${F1_IMG}/S/SERPER01_Sergio_Perez/serper01.png`},
+  {num:'77',code:'BOT',first:'Valtteri',last:'Bottas',team:'CAD',color:'#CFB991',img:`${F1_IMG}/V/VALBOT01_Valtteri_Bottas/valbot01.png`},
 ];
 const SK='players';
 
@@ -659,7 +660,7 @@ function renderIconTab(tab){
       const val=`[T]${t.code}`;
       const b=document.createElement('button');b.className='emoji-btn'+(selEmoji===val?' sel':'');
       b.title=t.name;
-      b.innerHTML=`<div class="team-badge" style="background:${t.color}">${t.code}</div>`;
+      b.innerHTML=`<img src="${t.logo}" style="width:100%;height:100%;object-fit:contain;padding:2px;" onerror="this.outerHTML='<div class=team-badge style=background:${t.color}>${t.code}</div>'" />`;
       b.onclick=()=>{selEmoji=val;document.querySelectorAll('.emoji-btn').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');};
       ep.appendChild(b);
     });
@@ -681,7 +682,7 @@ function renderAvatar(emoji,size){
   if(emoji&&emoji.startsWith('[T]')){
     const code=emoji.slice(3);
     const t=F1_TEAMS.find(x=>x.code===code);
-    if(t) return `<div class="team-badge" style="background:${t.color};width:${size}px;height:${size}px;border-radius:8px;font-size:${Math.max(8,size/4)}px">${t.code}</div>`;
+    if(t) return `<div style="width:${size}px;height:${size}px;border-radius:8px;overflow:hidden;background:${t.color};display:flex;align-items:center;justify-content:center"><img src="${t.logo}" style="width:90%;height:90%;object-fit:contain" onerror="this.outerHTML='<span style=color:#fff;font-family:Russo One,sans-serif;font-size:${Math.max(8,size/4)}px;font-weight:900;letter-spacing:1px>${t.code}</span>'" /></div>`;
   }
   if(emoji&&emoji.startsWith('[D]')){
     const rest=emoji.slice(3);
@@ -1038,7 +1039,7 @@ function switchPhotoTab(tab,btn){
       const opt=document.createElement('div');
       opt.className='photo-opt'+(curVal===val?' sel':'');
       opt.title=t.name;
-      opt.innerHTML=`<div class="team-badge" style="background:${t.color};width:100%;height:100%;font-size:10px">${t.code}</div>`;
+      opt.innerHTML=`<div style="width:100%;height:100%;background:${t.color};border-radius:6px;display:flex;align-items:center;justify-content:center"><img src="${t.logo}" style="width:90%;height:90%;object-fit:contain" onerror="this.outerHTML='<span style=color:#fff;font-family:Russo One,sans-serif;font-size:10px;font-weight:900>${t.code}</span>'" /></div>`;
       opt.onclick=()=>{
         document.getElementById('emPhoto').value=val;
         document.getElementById('emTc').value=t.color;
@@ -1060,7 +1061,7 @@ function renderCellPhoto(photo){
   if(photo.startsWith('[T]')){
     const code=photo.slice(3);
     const t=F1_TEAMS.find(x=>x.code===code);
-    if(t) return `<div class="team-badge" style="background:${t.color};width:36px;height:36px;border-radius:6px;font-size:10px">${t.code}</div>`;
+    if(t) return `<div style="width:36px;height:36px;border-radius:6px;background:${t.color};display:flex;align-items:center;justify-content:center"><img src="${t.logo}" style="width:90%;height:90%;object-fit:contain" onerror="this.outerHTML='<span style=color:#fff;font-family:Russo One,sans-serif;font-size:10px;font-weight:900>${t.code}</span>'" /></div>`;
   }
   return '';
 }
