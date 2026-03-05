@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DataService } from '../../core/services/data.service';
 import { AuthService } from '../../core/services/auth.service';
+import { DialogService } from '../../shared/services/dialog.service';
 import { AvatarComponent } from '../../shared/components/avatar/avatar.component';
 import { EMOJI_CATS, EMOJIS } from '../../core/data/emojis.data';
 import { F1_TEAMS } from '../../core/data/teams.data';
@@ -22,9 +23,10 @@ type PinStep = 'idle' | 'entering';
   templateUrl: './player-screen.html',
 })
 export class PlayerScreenComponent implements OnInit {
-  private _data = inject(DataService);
-  private _auth = inject(AuthService);
-  private _router = inject(Router);
+  private _data   = inject(DataService);
+  private _auth   = inject(AuthService);
+  private _router  = inject(Router);
+  private _dlg     = inject(DialogService);
 
   readonly players = computed(() => this._data.getPlayersSorted());
 
@@ -76,8 +78,8 @@ export class PlayerScreenComponent implements OnInit {
 
   // ── Add player ──
   async addPlayer(): Promise<void> {
-    if (!this.newName.trim()) { alert('Entrez un prénom'); return; }
-    if (!/^\d{4}$/.test(this.newPin)) { alert('Le PIN doit être exactement 4 chiffres'); return; }
+    if (!this.newName.trim()) { this._dlg.alert('Entrez un prénom', 'Champ requis'); return; }
+    if (!/^\d{4}$/.test(this.newPin)) { this._dlg.alert('Le PIN doit être exactement 4 chiffres', 'PIN invalide'); return; }
 
     const id = 'p' + Date.now();
     const player: Player = {
@@ -155,7 +157,18 @@ export class PlayerScreenComponent implements OnInit {
   async deletePlayer(event: Event, id: string): Promise<void> {
     event.stopPropagation();
     const p = this._data.getPlayer(id);
-    if (!p || !confirm(`Supprimer « ${p.name} » ?`)) return;
+    if (!p) return;
+
+    const pin = await this._dlg.pin(`Entrez le PIN de « ${p.name} » pour le supprimer`, 'Confirmation PIN');
+    if (pin === null) return;
+
+    if (this._auth.hashPin(pin) !== p.pin) {
+      await this._dlg.alert('PIN incorrect. Suppression annulée.', 'Erreur');
+      return;
+    }
+
+    const ok = await this._dlg.confirm(`Supprimer définitivement « ${p.name} » et toutes ses données ?`, 'Supprimer le joueur');
+    if (!ok) return;
     await this._data.deletePlayer(id);
   }
 

@@ -1,0 +1,67 @@
+@if (current(); as cfg) {
+<div class="dlg-overlay" (keydown)="onKeydown($event)">
+  <div class="dlg-card" tabindex="-1">
+
+    <!-- Header -->
+    <div class="dlg-header" [class.dlg-danger]="cfg.type === 'confirm' || cfg.type === 'pin'">
+      <span class="dlg-icon">
+        @if (cfg.type === 'alert')   { ℹ️ }
+        @if (cfg.type === 'confirm') { ⚠️ }
+        @if (cfg.type === 'prompt')  { ✏️ }
+        @if (cfg.type === 'pin')     { 🔐 }
+      </span>
+      <span class="dlg-title">{{ cfg.title }}</span>
+    </div>
+
+    <!-- Body -->
+    <div class="dlg-body">
+      <p class="dlg-msg">{{ cfg.message }}</p>
+
+      <!-- Prompt: text input -->
+      @if (cfg.type === 'prompt') {
+        <input
+          class="dlg-input"
+          [value]="inputValue()"
+          (input)="inputValue.set($any($event.target).value)"
+          (keydown.enter)="ok()"
+          autofocus />
+      }
+
+      <!-- PIN: 4-digit boxes -->
+      @if (cfg.type === 'pin') {
+        <div class="dlg-pin-row">
+          @for (d of pinDigits(); track $index) {
+            <input
+              class="dlg-pin-box"
+              [id]="'dlg-pd' + ($index + 1)"
+              [value]="d"
+              maxlength="1"
+              inputmode="numeric"
+              type="password"
+              (input)="onPinDigit($event, $index)"
+              (keydown)="onPinKey($event, $index)"
+              autofocus />
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Footer -->
+    <div class="dlg-footer">
+      @if (cfg.type !== 'alert') {
+        <button class="dlg-btn dlg-btn-cancel" (click)="cancel()">Annuler</button>
+      }
+      <button
+        class="dlg-btn dlg-btn-ok"
+        [disabled]="cfg.type === 'pin' && !pinFull()"
+        (click)="ok()">
+        @if (cfg.type === 'alert')   { OK }
+        @if (cfg.type === 'confirm') { Confirmer }
+        @if (cfg.type === 'prompt')  { Valider }
+        @if (cfg.type === 'pin')     { Valider }
+      </button>
+    </div>
+
+  </div>
+</div>
+}

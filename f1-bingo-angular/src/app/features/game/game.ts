@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { DataService } from '../../core/services/data.service';
 import { AuthService } from '../../core/services/auth.service';
 import { GameService } from '../../core/services/game.service';
+import { DialogService } from '../../shared/services/dialog.service';
 import { Cell } from '../../core/models/cell.model';
 import { BingoGridComponent } from './bingo-grid/bingo-grid';
 import { PlayerBarComponent } from './player-bar/player-bar';
@@ -29,6 +30,7 @@ export class GameComponent implements OnInit {
   private _router = inject(Router);
   private _data   = inject(DataService);
   private _auth   = inject(AuthService);
+  private _dlg    = inject(DialogService);
   readonly game   = inject(GameService);
 
   showScoreboard = signal(false);
@@ -102,21 +104,33 @@ export class GameComponent implements OnInit {
   toggleEditMode(): void { this.game.toggleEditMode(); }
 
   async resetGrid(): Promise<void> {
-    if (!confirm('Réinitialiser votre grille ?')) return;
+    const ok = await this._dlg.confirm('Réinitialiser votre grille ? Toutes les cases seront décochées.', 'Réinitialiser');
+    if (!ok) return;
     await this.game.reset();
   }
 
   async editPlayerName(): Promise<void> {
     const p = this.currentPlayer();
     if (!p) return;
-    const newName = prompt('Nouveau nom :', p.name);
+    const newName = await this._dlg.prompt('Nouveau nom :', p.name, 'Modifier le nom');
     if (!newName?.trim() || newName.trim() === p.name) return;
     await this._data.updatePlayer({ ...p, name: newName.trim().slice(0, 20) });
   }
 
   async deleteCurrentPlayer(): Promise<void> {
     const p = this.currentPlayer();
-    if (!p || !confirm(`Supprimer « ${p.name} » et toutes ses données ?`)) return;
+    if (!p) return;
+
+    const pin = await this._dlg.pin(`Confirmez votre PIN pour supprimer « ${p.name} »`, 'Confirmation PIN');
+    if (pin === null) return;
+
+    if (this._auth.hashPin(pin) !== p.pin) {
+      await this._dlg.alert('PIN incorrect. Suppression annulée.', 'Erreur');
+      return;
+    }
+
+    const ok = await this._dlg.confirm(`Supprimer définitivement « ${p.name} » et toutes ses données ?`, 'Supprimer le joueur');
+    if (!ok) return;
     await this._data.deletePlayer(p.id);
     this.switchPlayer();
   }
