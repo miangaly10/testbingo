@@ -80,6 +80,15 @@ export class EditCellModalComponent {
 
   isSelectedPhoto(val: string): boolean { return this.photo() === val; }
 
+  onDriverImgError(e: Event, code: string, color: string): void {
+    const img = e.target as HTMLElement;
+    img.style.display = 'none';
+    const fb = document.createElement('div');
+    fb.style.cssText = `width:100%;height:100%;border-radius:6px;background:${color};display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:8px;font-weight:900;color:#fff;letter-spacing:.5px`;
+    fb.textContent = code;
+    img.parentElement?.appendChild(fb);
+  }
+
   save(): void {
     this.saved.emit({
       text:  this.text(),

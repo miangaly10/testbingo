@@ -92,7 +92,7 @@
                    [title]="d.first + ' ' + d.last + ' #' + d.num"
                    (click)="selectPhoto('[D]' + d.code + d.num)">
                 <img [src]="d.img" [alt]="d.code"
-                     (error)="$any($event.target).style.display='none'" />
+                     (error)="onDriverImgError($event, d.code, d.color)" />
               </div>
             }
           }
