@@ -2,7 +2,8 @@
   "buildCommand": "cd f1-bingo-angular && npm install && npm run build",
   "outputDirectory": "f1-bingo-angular/dist/f1-bingo-angular/browser",
   "cleanUrls": true,
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+  "routes": [
+    { "handle": "filesystem" },
+    { "src": "/.*", "dest": "/index.html" }
   ]
 }
