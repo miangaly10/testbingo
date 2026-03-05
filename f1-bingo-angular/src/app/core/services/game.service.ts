@@ -79,7 +79,8 @@ export class GameService {
 
     const ch = new Set(p.checked);
     let score = p.score ?? 0;
-    const pts = SCORE_MAP[this._cells()[idx]?.prob ?? ''] ?? 0;
+    const prob = this._cells()[idx]?.prob || 'pm';
+    const pts = SCORE_MAP[prob] ?? 0;
 
     if (ch.has(idx)) {
       ch.delete(idx);
