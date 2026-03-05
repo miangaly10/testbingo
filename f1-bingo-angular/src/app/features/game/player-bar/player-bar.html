@@ -1,0 +1,51 @@
+<div class="cp-bar">
+  <div class="cp-left">
+    <div class="cp-av">
+      <app-avatar [emoji]="player().emoji" [size]="36" />
+    </div>
+    <div>
+      <div class="cp-lbl">Joueur actif</div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <div class="cp-nm">{{ player().name }}</div>
+        @if (isOwner()) {
+          <button class="btn bs" style="padding:3px 8px;font-size:11px" (click)="editName.emit()">✏️</button>
+        }
+      </div>
+    </div>
+  </div>
+  <button class="cp-sw" (click)="switchPlayer.emit()">⇄ Changer</button>
+  @if (isOwner()) {
+    <button class="btn bd" (click)="deletePlayer.emit()">🗑️ Supprimer</button>
+  } @else {
+    <span class="view-badge">👁️ Lecture seule</span>
+  }
+</div>
+
+<!-- Stats -->
+<div class="stats-row">
+  <div class="stat">
+    <div class="stat-n">{{ checkedCount() }}</div>
+    <div class="stat-l">Cochés</div>
+  </div>
+  <div class="stat">
+    <div class="stat-n">{{ player().lines ?? 0 }}</div>
+    <div class="stat-l">Lignes</div>
+  </div>
+  <div class="stat">
+    <div class="stat-n">{{ player().score ?? 0 }}</div>
+    <div class="stat-l">Score pts</div>
+  </div>
+</div>
+
+<!-- Progress bar -->
+<div class="prog">
+  <div class="prog-f" [style.width.%]="checkedCount() / 25 * 100"></div>
+</div>
+<div class="prog-t">{{ checkedCount() }} / 25 cases cochées</div>
+
+<!-- Lines row -->
+<div class="lines-row">
+  @for (ls of lineStatuses(); track ls.id) {
+    <div class="lp" [class.done]="ls.done">{{ lineLabel(ls.id) }}</div>
+  }
+</div>

@@ -1,0 +1,131 @@
+@if (visible() && cell()) {
+  <div id="editModal" class="show">
+    <div class="em-card">
+      <div class="em-title">✏️ Modifier la case</div>
+
+      <!-- Preview -->
+      <div class="em-preview">
+        <span class="em-prev-emoji">{{ emoji() }}</span>
+        <div>
+          <div class="em-prev-text" [innerHTML]="previewText()"></div>
+          <div class="em-prev-tag">{{ tag() }}</div>
+        </div>
+      </div>
+
+      <!-- Text -->
+      <div class="em-field">
+        <div class="em-label">Texte (utiliser \n pour les sauts de ligne)</div>
+        <textarea class="em-textarea" rows="3" [value]="text()"
+                  (input)="text.set($any($event.target).value)"></textarea>
+      </div>
+
+      <!-- Emoji -->
+      <div class="em-field">
+        <div class="em-label">Emoji</div>
+        <div class="emoji-dropdown-wrap">
+          <div class="emoji-sel-btn" [class.open]="emojiDropOpen()" (click)="toggleEmojiDrop()">
+            <div class="emoji-sel-preview">{{ emoji() }}</div>
+            <div class="emoji-sel-label">Choisir un emoji</div>
+            <div class="emoji-sel-arrow">▼</div>
+          </div>
+          <div class="emoji-dd-panel" [class.show]="emojiDropOpen()">
+            @for (cat of emojiCats; track cat.cat) {
+              <div class="emoji-dd-cat">{{ cat.cat }}</div>
+              <div class="emoji-dd-grid">
+                @for (em of cat.items; track em) {
+                  <div class="emoji-dd-item" [class.sel]="emoji() === em"
+                       (click)="selectEmoji(em)">{{ em }}</div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Tag -->
+      <div class="em-field">
+        <div class="em-label">Tag</div>
+        <input class="em-input" maxlength="20"
+               [value]="tag()" (input)="tag.set($any($event.target).value)" />
+      </div>
+
+      <!-- Color + Pct -->
+      <div class="em-row">
+        <div class="em-field">
+          <div class="em-label">Couleur équipe</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <input type="color" [value]="tc() || '#000000'"
+                   style="width:40px;height:34px;border:none;border-radius:6px;cursor:pointer;background:transparent;padding:0"
+                   (input)="onColorPickerChange($event)" />
+            <input class="em-input" placeholder="#DC0000" maxlength="7" style="flex:1"
+                   [value]="tc()" (input)="onColorTextChange($any($event.target).value)" />
+            <button class="btn bs" style="padding:6px 10px;font-size:11px" (click)="clearColor()">✕</button>
+          </div>
+        </div>
+        <div class="em-field">
+          <div class="em-label">Pourcentage</div>
+          <input class="em-input" placeholder="85%" maxlength="5"
+                 [value]="pct()" (input)="pct.set($any($event.target).value)" />
+        </div>
+      </div>
+
+      <!-- Photo picker -->
+      <div class="em-field">
+        <div class="em-label">📷 Photo (pilote / écurie)</div>
+        <div class="photo-tabs">
+          <button class="photo-tab" [class.active]="photoTab() === 'drivers'"
+                  (click)="setPhotoTab('drivers')">Pilotes</button>
+          <button class="photo-tab" [class.active]="photoTab() === 'teams'"
+                  (click)="setPhotoTab('teams')">Ecuries</button>
+          <button class="photo-tab" [class.active]="photoTab() === 'none'"
+                  (click)="setPhotoTab('none')">Aucune</button>
+        </div>
+        <div class="photo-grid">
+          @if (photoTab() === 'none') {
+            <span style="color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1px;padding:4px">
+              Pas de photo — l'emoji sera affiché
+            </span>
+          }
+          @if (photoTab() === 'drivers') {
+            @for (d of drivers; track d.code + d.num) {
+              <div class="photo-opt" [class.sel]="isSelectedPhoto('[D]' + d.code + d.num)"
+                   [title]="d.first + ' ' + d.last + ' #' + d.num"
+                   (click)="selectPhoto('[D]' + d.code + d.num)">
+                <img [src]="d.img" [alt]="d.code"
+                     (error)="$any($event.target).style.display='none'" />
+              </div>
+            }
+          }
+          @if (photoTab() === 'teams') {
+            @for (t of teams; track t.code) {
+              <div class="photo-opt" [class.sel]="isSelectedPhoto('[T]' + t.code)"
+                   [title]="t.name"
+                   (click)="selectTeamPhoto(t.code, t.color)">
+                <div [style.background]="t.color"
+                     style="width:100%;height:100%;border-radius:6px;display:flex;align-items:center;justify-content:center">
+                  <img [src]="t.logo" style="width:90%;height:90%;object-fit:contain" [alt]="t.code"
+                       (error)="$any($event.target).style.display='none'" />
+                </div>
+              </div>
+            }
+          }
+        </div>
+      </div>
+
+      <!-- Probability -->
+      <div class="em-field">
+        <div class="em-label">Probabilité</div>
+        <div class="prob-sel">
+          <div class="prob-opt" [class.sel-ph]="prob() === 'ph'" (click)="pickProb('ph')">🟢 Haute</div>
+          <div class="prob-opt" [class.sel-pm]="prob() === 'pm'" (click)="pickProb('pm')">🟠 Moyenne</div>
+          <div class="prob-opt" [class.sel-pl]="prob() === 'pl'" (click)="pickProb('pl')">🔴 Basse</div>
+        </div>
+      </div>
+
+      <div class="em-actions">
+        <button class="btn bs" (click)="cancel()">Annuler</button>
+        <button class="btn bp" (click)="save()">💾 Sauvegarder</button>
+      </div>
+    </div>
+  </div>
+}

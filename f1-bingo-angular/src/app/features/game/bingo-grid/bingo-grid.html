@@ -1,0 +1,21 @@
+<div class="bingo-hdr">
+  <div class="bl" style="color:#E8002D">B</div>
+  <div class="bl" style="color:#FF8000">I</div>
+  <div class="bl" style="color:#FFD700">N</div>
+  <div class="bl" style="color:#00D2BE">G</div>
+  <div class="bl" style="color:#6EC6E6">O</div>
+</div>
+
+<div class="bingo-grid">
+  @for (cell of cells(); track cell.id; let i = $index) {
+    <app-bingo-cell
+      [cell]="cell"
+      [isChecked]="checked().has(i)"
+      [isBline]="!!blines()[i]"
+      [editMode]="editMode()"
+      (cellClick)="onCellClick(i)"
+      (dragStarted)="onDragStart($event)"
+      (droppedOn)="onDropOn($event)"
+    />
+  }
+</div>

@@ -1,0 +1,66 @@
+@if (currentPlayer()) {
+  <!-- Scoreboard button -->
+  <button class="sb-btn" (click)="showScoreboard.set(true)">🏆 Classement</button>
+
+  <div class="wrapper" id="mainApp">
+    <!-- Header -->
+    <div class="header">
+      <div class="hbadge">Saison 2026</div>
+      <h1>F1 BINGO</h1>
+      <div class="subtitle">Predictions · Chaos · Glory</div>
+    </div>
+
+    <!-- Player bar + stats + lines -->
+    <app-player-bar
+      [player]="currentPlayer()!"
+      [isOwner]="isOwner()"
+      [lineStatuses]="lineStats()"
+      (switchPlayer)="switchPlayer()"
+      (deletePlayer)="deleteCurrentPlayer()"
+      (editName)="editPlayerName()"
+    />
+
+    <!-- Bingo grid -->
+    <app-bingo-grid
+      [cells]="cells()"
+      [checked]="checkedSet()"
+      [blines]="isBlines()"
+      [editMode]="editMode()"
+      (cellClicked)="onCellClick($event)"
+      (cellsSwapped)="onCellsSwapped($event)"
+    />
+
+    @if (editMode()) {
+      <div class="drag-hint show">🔀 Glissez les cases pour les réorganiser — sauvegarde auto</div>
+    }
+
+    <!-- Controls -->
+    @if (isOwner()) {
+      <div class="controls">
+        <button class="btn bg" (click)="toggleEditMode()">
+          ✏️ {{ editMode() ? 'Terminer édition' : 'Modifier la grille' }}
+        </button>
+        <button class="btn bs" (click)="resetGrid()">↺ Réinitialiser ma grille</button>
+      </div>
+    }
+  </div>
+
+  <!-- Modals -->
+  <app-edit-cell-modal
+    [cell]="editingCell()"
+    [visible]="editCellIdx() !== null"
+    (saved)="onEditSave($event)"
+    (cancelled)="onEditCancel()"
+  />
+
+  <app-scoreboard
+    [visible]="showScoreboard()"
+    (close)="showScoreboard.set(false)"
+  />
+
+  <app-win-banner
+    [visible]="showWin()"
+    [message]="winMessage()"
+    (closed)="closeWin()"
+  />
+}

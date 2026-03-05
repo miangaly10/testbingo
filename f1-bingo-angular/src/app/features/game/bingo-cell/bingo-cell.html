@@ -1,0 +1,36 @@
+<div [class]="hostClass()"
+     [draggable]="editMode()"
+     (click)="onClick()"
+     (dragstart)="onDragStart($event)"
+     (dragend)="onDragEnd()"
+     (dragover)="onDragOver($event)"
+     (dragleave)="onDragLeave()"
+     (drop)="onDrop($event)">
+
+  <span class="pbadge" [class]="cell().prob">{{ cell().pct }}</span>
+
+  <div class="clogo" [style]="logoStyle()">
+    <span class="cell-emoji">{{ cell().emoji }}</span>
+  </div>
+
+  <div class="ctxt" [innerHTML]="textLines()"></div>
+  <div class="ctag">{{ cell().tag }}</div>
+
+  @let photo = cell().photo | cellPhotoInfo;
+  @if (photo) {
+    <div class="cell-bottom">
+      @if (photo.type === 'driver') {
+        <img class="cell-photo" [src]="photo.img"
+             [alt]="photo.code"
+             (error)="$any($event.target).style.display='none'" />
+      }
+      @if (photo.type === 'team') {
+        <div class="cell-team-logo" [style.background]="photo.color">
+          <img [src]="photo.logo" style="width:90%;height:90%;object-fit:contain"
+               [alt]="photo.code"
+               (error)="$any($event.target).style.display='none'" />
+        </div>
+      }
+    </div>
+  }
+</div>
