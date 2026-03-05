@@ -893,8 +893,11 @@ function buildGrid(){
 
 // ═══════ DRAG: SWAP & SAVE ═══════
 async function swapCells(a,b){
-  // Swap in CELLS array
-  const tmp={...CELLS[a]};Object.assign(CELLS[a],CELLS[b]);Object.assign(CELLS[b],tmp);
+  // Deep copy & full replace to avoid property leaking between cells
+  const tmpA=JSON.parse(JSON.stringify(CELLS[a]));
+  const tmpB=JSON.parse(JSON.stringify(CELLS[b]));
+  CELLS[a]=tmpB;
+  CELLS[b]=tmpA;
   // Fix ids & cols based on position
   CELLS[a].id=a;CELLS[a].col=a%5;
   CELLS[b].id=b;CELLS[b].col=b%5;
