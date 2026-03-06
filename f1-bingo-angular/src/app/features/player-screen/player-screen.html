@@ -6,7 +6,7 @@
   <!-- GP Countdown -->
   <div class="gp-countdown">
     <span class="gp-label">Prochain GP</span>
-    <span style="font-size:18px">{{ nextGpFlag() }}</span>
+    <span><img class="gp-flag-img" [src]="'https://flagcdn.com/20x15/' + nextGpCc() + '.png'" [alt]="nextGpName()" /></span>
     <span class="gp-label" style="color:var(--text)">{{ nextGpName() }}</span>
     <span class="gp-timer">{{ countdown() }}</span>
   </div>

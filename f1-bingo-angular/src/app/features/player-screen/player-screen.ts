@@ -45,7 +45,7 @@ export class PlayerScreenComponent implements OnInit, OnDestroy {
 
   // ── Countdown ──
   nextGpName = signal(getNextRace().name);
-  nextGpFlag = signal(getNextRace().flag);
+  nextGpCc   = signal(getNextRace().cc);
   countdown  = signal(formatCountdown(getNextRace().date));
   private _countdownId: ReturnType<typeof setInterval> | null = null;
 
@@ -67,7 +67,7 @@ export class PlayerScreenComponent implements OnInit, OnDestroy {
     this._countdownId = setInterval(() => {
       const next = getNextRace();
       this.nextGpName.set(next.name);
-      this.nextGpFlag.set(next.flag);
+      this.nextGpCc.set(next.cc);
       this.countdown.set(formatCountdown(next.date));
     }, 1000);
   }

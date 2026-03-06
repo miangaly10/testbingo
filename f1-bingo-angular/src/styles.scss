@@ -1151,6 +1151,16 @@ app-bingo-cell { display: contents; }
 }
 
 /* ── GP COUNTDOWN ────────────────────────────────────────────────────────────────────────── */
+.gp-flag-img {
+  display: inline-block;
+  vertical-align: middle;
+  width: 20px;
+  height: 15px;
+  object-fit: cover;
+  border-radius: 2px;
+  margin: 0 2px;
+}
+
 .gp-countdown {
   display: inline-flex;
   align-items: center;

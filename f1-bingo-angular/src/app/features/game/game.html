@@ -145,7 +145,7 @@
       <h1>F1 BINGO</h1>
       <div class="subtitle">Predictions · Chaos · Glory</div>
       <div class="gp-countdown">
-        <span class="gp-label">🏁 {{ nextGpFlag() }} {{ nextGpName() }}</span>
+        <span class="gp-label">🏁 <img class="gp-flag-img" [src]="'https://flagcdn.com/20x15/' + nextGpCc() + '.png'" [alt]="nextGpName()" /> {{ nextGpName() }}</span>
         <span class="gp-timer">{{ countdown() }}</span>
       </div>
     </div>

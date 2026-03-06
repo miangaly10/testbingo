@@ -1,9 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <!-- Red background with rounded corners -->
-  <rect width="32" height="32" rx="6" fill="#E8002D"/>
-  <!-- "F" letter -->
-  <text x="3" y="23" font-family="Arial Black, Arial, sans-serif" font-weight="900"
-        font-size="20" fill="#FFFFFF" letter-spacing="-1">F1</text>
-  <!-- Gold underline accent -->
-  <rect x="3" y="25" width="26" height="2.5" rx="1" fill="#FFD700"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 40">
+  <!-- Red background with angled right edge (F1 logo style) -->
+  <polygon points="2,0 58,0 62,40 2,40" fill="#E8002D"/>
+  <!-- F — vertical bar -->
+  <rect x="8" y="5" width="6" height="30" fill="white"/>
+  <!-- F — top horizontal bar -->
+  <rect x="8" y="5" width="17" height="6" fill="white"/>
+  <!-- F — middle horizontal bar -->
+  <rect x="8" y="17" width="14" height="5" fill="white"/>
+  <!-- 1 — angled top-left serif -->
+  <polygon points="31,13 37,5 37,13" fill="white"/>
+  <!-- 1 — vertical stem -->
+  <rect x="37" y="5" width="6" height="30" fill="white"/>
+  <!-- 1 — base -->
+  <rect x="31" y="29" width="12" height="6" fill="white"/>
 </svg>

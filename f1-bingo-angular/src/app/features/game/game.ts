@@ -22,33 +22,33 @@ import { AvatarPickerModalComponent } from './avatar-picker-modal/avatar-picker-
 import { AvatarComponent } from '../../shared/components/avatar/avatar.component';
 
 // ── 2026 F1 Calendar ─────────────────────────────────────────────────────────
-export interface GpEntry { name: string; flag: string; date: Date; sprint?: boolean; }
+export interface GpEntry { name: string; cc: string; date: Date; sprint?: boolean; }
 
 export const F1_CALENDAR_2026: GpEntry[] = [
-  { name: 'Australie',        flag: '🇦🇺', date: new Date('2026-03-08T04:00:00Z') },
-  { name: 'Chine',            flag: '🇨🇳', date: new Date('2026-03-15T08:00:00Z'), sprint: true },
-  { name: 'Japon',            flag: '🇯🇵', date: new Date('2026-03-29T06:00:00Z') },
-  { name: 'Bahreïn',          flag: '🇧🇭', date: new Date('2026-04-12T16:00:00Z') },
-  { name: 'Arabie Saoudite',  flag: '🇸🇦', date: new Date('2026-04-19T18:00:00Z') },
-  { name: 'Miami',            flag: '🇺🇸', date: new Date('2026-05-03T21:00:00Z'), sprint: true },
-  { name: 'Canada',           flag: '🇨🇦', date: new Date('2026-05-24T21:00:00Z'), sprint: true },
-  { name: 'Monaco',           flag: '🇲🇨', date: new Date('2026-06-07T14:00:00Z') },
-  { name: 'Barcelone',        flag: '🇪🇸', date: new Date('2026-06-14T14:00:00Z') },
-  { name: 'Autriche',         flag: '🇦🇹', date: new Date('2026-06-28T14:00:00Z') },
-  { name: 'Grande-Bretagne',  flag: '🇬🇧', date: new Date('2026-07-05T15:00:00Z'), sprint: true },
-  { name: 'Belgique',         flag: '🇧🇪', date: new Date('2026-07-19T14:00:00Z') },
-  { name: 'Hongrie',          flag: '🇭🇺', date: new Date('2026-07-26T14:00:00Z') },
-  { name: 'Pays-Bas',         flag: '🇳🇱', date: new Date('2026-08-23T14:00:00Z'), sprint: true },
-  { name: 'Italie',           flag: '🇮🇹', date: new Date('2026-09-06T14:00:00Z') },
-  { name: 'Espagne (Madrid)', flag: '🇪🇸', date: new Date('2026-09-13T14:00:00Z') },
-  { name: 'Azerbaïdjan',      flag: '🇦🇿', date: new Date('2026-09-26T12:00:00Z') },
-  { name: 'Singapour',        flag: '🇸🇬', date: new Date('2026-10-11T13:00:00Z'), sprint: true },
-  { name: 'États-Unis',       flag: '🇺🇸', date: new Date('2026-10-25T21:00:00Z') },
-  { name: 'Mexique',          flag: '🇲🇽', date: new Date('2026-11-01T20:00:00Z') },
-  { name: 'Brésil',           flag: '🇧🇷', date: new Date('2026-11-08T17:00:00Z') },
-  { name: 'Las Vegas',        flag: '🇺🇸', date: new Date('2026-11-22T04:00:00Z') },
-  { name: 'Qatar',            flag: '🇶🇦', date: new Date('2026-11-29T16:00:00Z') },
-  { name: 'Abu Dhabi',        flag: '🇦🇪', date: new Date('2026-12-06T13:00:00Z') },
+  { name: 'Australie',        cc: 'au', date: new Date('2026-03-08T04:00:00Z') },
+  { name: 'Chine',            cc: 'cn', date: new Date('2026-03-15T08:00:00Z'), sprint: true },
+  { name: 'Japon',            cc: 'jp', date: new Date('2026-03-29T06:00:00Z') },
+  { name: 'Bahreïn',          cc: 'bh', date: new Date('2026-04-12T16:00:00Z') },
+  { name: 'Arabie Saoudite',  cc: 'sa', date: new Date('2026-04-19T18:00:00Z') },
+  { name: 'Miami',            cc: 'us', date: new Date('2026-05-03T21:00:00Z'), sprint: true },
+  { name: 'Canada',           cc: 'ca', date: new Date('2026-05-24T21:00:00Z'), sprint: true },
+  { name: 'Monaco',           cc: 'mc', date: new Date('2026-06-07T14:00:00Z') },
+  { name: 'Barcelone',        cc: 'es', date: new Date('2026-06-14T14:00:00Z') },
+  { name: 'Autriche',         cc: 'at', date: new Date('2026-06-28T14:00:00Z') },
+  { name: 'Grande-Bretagne',  cc: 'gb', date: new Date('2026-07-05T15:00:00Z'), sprint: true },
+  { name: 'Belgique',         cc: 'be', date: new Date('2026-07-19T14:00:00Z') },
+  { name: 'Hongrie',          cc: 'hu', date: new Date('2026-07-26T14:00:00Z') },
+  { name: 'Pays-Bas',         cc: 'nl', date: new Date('2026-08-23T14:00:00Z'), sprint: true },
+  { name: 'Italie',           cc: 'it', date: new Date('2026-09-06T14:00:00Z') },
+  { name: 'Espagne (Madrid)', cc: 'es', date: new Date('2026-09-13T14:00:00Z') },
+  { name: 'Azerbaïdjan',      cc: 'az', date: new Date('2026-09-26T12:00:00Z') },
+  { name: 'Singapour',        cc: 'sg', date: new Date('2026-10-11T13:00:00Z'), sprint: true },
+  { name: 'États-Unis',       cc: 'us', date: new Date('2026-10-25T21:00:00Z') },
+  { name: 'Mexique',          cc: 'mx', date: new Date('2026-11-01T20:00:00Z') },
+  { name: 'Brésil',           cc: 'br', date: new Date('2026-11-08T17:00:00Z') },
+  { name: 'Las Vegas',        cc: 'us', date: new Date('2026-11-22T04:00:00Z') },
+  { name: 'Qatar',            cc: 'qa', date: new Date('2026-11-29T16:00:00Z') },
+  { name: 'Abu Dhabi',        cc: 'ae', date: new Date('2026-12-06T13:00:00Z') },
 ];
 
 export function getNextRace(): GpEntry {
@@ -146,7 +146,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
   // ── GP Countdown ──
   nextGpName      = signal(getNextRace().name);
-  nextGpFlag      = signal(getNextRace().flag);
+  nextGpCc        = signal(getNextRace().cc);
   countdown       = signal(formatCountdown(getNextRace().date));
 
   // ── Intervals / Subscriptions ──
@@ -201,7 +201,7 @@ export class GameComponent implements OnInit, OnDestroy {
     this._countdownId = setInterval(() => {
       const next = getNextRace();
       this.nextGpName.set(next.name);
-      this.nextGpFlag.set(next.flag);
+      this.nextGpCc.set(next.cc);
       this.countdown.set(formatCountdown(next.date));
     }, 1000);
 
