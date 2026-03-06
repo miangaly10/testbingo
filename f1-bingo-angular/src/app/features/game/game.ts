@@ -93,6 +93,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
   showScoreboard   = signal(false);
   showHistory      = signal(false);
+  showSettings     = signal(false);
   editCellIdx      = signal<number | null>(null);
   showAvatarPicker = signal(false);
   showPlayerBrowse = signal(false);

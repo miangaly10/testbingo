@@ -3,10 +3,75 @@
   <div class="sb-bar">
     <button class="sb-btn" (click)="showScoreboard.set(true)">🏆 Classement</button>
     <button class="sb-btn" (click)="showHistory.set(true)">📋 Historique</button>
-    <button class="sb-btn sb-btn--icon" (click)="toggleSound()" [title]="soundEnabled() ? 'Couper le son' : 'Activer le son'">
-      {{ soundEnabled() ? '🔊' : '🔇' }}
-    </button>
+    @if (isOwner()) {
+      <button class="sb-btn sb-btn--icon" (click)="showSettings.set(true)" title="Paramètres">⚙️</button>
+    }
   </div>
+
+  <!-- Settings Modal -->
+  @if (showSettings() && isOwner()) {
+    <div class="set-overlay" (click)="showSettings.set(false)">
+      <div class="set-modal" (click)="$event.stopPropagation()">
+        <button class="set-close" (click)="showSettings.set(false)">✕</button>
+        <div class="set-header">
+          <span class="set-badge">F1 2026</span>
+          <div class="set-title">⚙️ Paramètres</div>
+        </div>
+
+        @if (currentPlayer()) {
+          <div class="set-player-info">
+            <div class="set-av" (click)="showAvatarPicker.set(true); showSettings.set(false)">
+              <app-avatar [emoji]="currentPlayer()!.emoji" [size]="44" />
+              <span class="set-av-hint">✏️</span>
+            </div>
+            <div>
+              <div class="set-player-name">{{ currentPlayer()!.name }}</div>
+              <div class="set-player-stats">{{ currentPlayer()!.score ?? 0 }} pts · {{ currentPlayer()!.lines ?? 0 }} lignes</div>
+            </div>
+          </div>
+        }
+
+        <div class="set-section-title">SON</div>
+        <button class="set-row" (click)="toggleSound()">
+          <span class="set-row-icon">{{ soundEnabled() ? '🔊' : '🔇' }}</span>
+          <span class="set-row-label">{{ soundEnabled() ? 'Son activé' : 'Son désactivé' }}</span>
+          <span class="set-toggle" [class.on]="soundEnabled()"></span>
+        </button>
+
+        @if (isOwner()) {
+          <div class="set-section-title">MON COMPTE</div>
+          <button class="set-row" (click)="editPlayerName(); showSettings.set(false)">
+            <span class="set-row-icon">✏️</span>
+            <span class="set-row-label">Modifier le nom</span>
+            <span class="set-row-arrow">›</span>
+          </button>
+          <button class="set-row" (click)="showAvatarPicker.set(true); showSettings.set(false)">
+            <span class="set-row-icon">👤</span>
+            <span class="set-row-label">Changer l’avatar</span>
+            <span class="set-row-arrow">›</span>
+          </button>
+          <button class="set-row" (click)="changePin(); showSettings.set(false)">
+            <span class="set-row-icon">🔒</span>
+            <span class="set-row-label">Changer le PIN</span>
+            <span class="set-row-arrow">›</span>
+          </button>
+
+          <div class="set-section-title">DANGER</div>
+          <button class="set-row set-row--danger" (click)="deleteCurrentPlayer(); showSettings.set(false)">
+            <span class="set-row-icon">🗑️</span>
+            <span class="set-row-label">Supprimer mon profil</span>
+            <span class="set-row-arrow">›</span>
+          </button>
+        }
+
+        <button class="set-row" style="margin-top:4px" (click)="switchPlayer()">
+          <span class="set-row-icon">⇄</span>
+          <span class="set-row-label">Changer de joueur</span>
+          <span class="set-row-arrow">›</span>
+        </button>
+      </div>
+    </div>
+  }
 
   <!-- Spectator banner -->
   @if (isSpectating() && spectatedPlayer()) {
