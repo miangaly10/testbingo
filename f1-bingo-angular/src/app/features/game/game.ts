@@ -367,6 +367,8 @@ export class GameComponent implements OnInit, OnDestroy {
 
   closeWin(): void { this.game.closeWin(); }
 
+  openLiveTracker(): void { this._router.navigate(['/live']); }
+
   // ── Confetti ──
   triggerConfetti(): void {
     const cv = document.getElementById('cfv') as HTMLCanvasElement | null;

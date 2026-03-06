@@ -29,6 +29,8 @@ export class PlayerScreenComponent implements OnInit, OnDestroy {
   private _router  = inject(Router);
   private _dlg     = inject(DialogService);
 
+  openLiveTracker(): void { this._router.navigate(['/live']); }
+
   readonly players = computed(() => this._data.getPlayersSorted());
 
   // ── Add player form ──

@@ -12,5 +12,10 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/game/game').then(m => m.GameComponent),
   },
+  {
+    path: 'live',
+    loadComponent: () =>
+      import('./features/live-tracker/live-tracker').then(m => m.LiveTrackerComponent),
+  },
   { path: '**', redirectTo: 'login' },
 ];

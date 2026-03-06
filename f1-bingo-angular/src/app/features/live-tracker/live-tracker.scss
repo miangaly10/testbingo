@@ -1,0 +1,1009 @@
+// ── Shell ─────────────────────────────────────────────────────────────────────
+.lt-shell {
+  min-height: 100vh;
+  background: #0a0a0f;
+  color: #e0e0e6;
+  font-family: 'F1 Regular', 'Titillium Web', 'Segoe UI', Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+// ── Header ────────────────────────────────────────────────────────────────────
+.lt-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: #0d0d14;
+  border-bottom: 2px solid #E8002D;
+  flex-shrink: 0;
+}
+
+.lt-back {
+  background: transparent;
+  border: 1px solid #444;
+  color: #aaa;
+  padding: 5px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all .15s;
+  flex-shrink: 0;
+  &:hover { border-color: #E8002D; color: #fff; }
+}
+
+.lt-session-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.lt-session-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.lt-circuit {
+  font-size: 11px;
+  color: #888;
+  text-transform: uppercase;
+}
+
+.lt-status-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 12px;
+  background: #222;
+  color: #aaa;
+  border: 1px solid #333;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  &.live {
+    background: #1a0505;
+    color: #ff4444;
+    border-color: #E8002D;
+    animation: live-pulse 1.5s infinite;
+  }
+}
+
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: .6; }
+}
+
+.lt-header-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.lt-update {
+  font-size: 11px;
+  color: #555;
+}
+
+.lt-logo {
+  font-size: 12px;
+  color: #666;
+  font-weight: 600;
+}
+
+// ── Loading & Error ───────────────────────────────────────────────────────────
+.lt-loading {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: #888;
+  font-size: 14px;
+}
+
+.lt-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #222;
+  border-top-color: #E8002D;
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+
+.lt-spinner-sm {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #333;
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.lt-error {
+  padding: 24px;
+  text-align: center;
+  color: #ff6666;
+  font-size: 14px;
+}
+
+.lt-empty {
+  padding: 40px 20px;
+  text-align: center;
+  color: #555;
+  font-size: 13px;
+  line-height: 1.9;
+}
+
+// ── Race Control bar ──────────────────────────────────────────────────────────
+.lt-rc-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 16px;
+  background: #111118;
+  border-bottom: 1px solid #1a1a28;
+  font-size: 12px;
+  min-height: 30px;
+
+  &.flag-green  { background: #0b1f0b; border-bottom-color: #1a4d1a; }
+  &.flag-yellow { background: #1f1b00; border-bottom-color: #4d4400; }
+  &.flag-red    { background: #1a0505; border-bottom-color: #4d0000; }
+  &.flag-sc     { background: #1a1200; border-bottom-color: #4d3800; }
+  &.flag-vsc    { background: #1a1500; border-bottom-color: #4d4000; }
+  &.flag-chq    { background: #0f0f0f; border-bottom-color: #444; }
+}
+
+.lt-flag-label {
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+.lt-rc-msg {
+  color: #aaa;
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// ── Weather strip ─────────────────────────────────────────────────────────────
+.lt-weather {
+  display: flex;
+  gap: 16px;
+  padding: 5px 16px;
+  background: #0d0d14;
+  border-bottom: 1px solid #1a1a28;
+  font-size: 11px;
+  color: #888;
+  flex-wrap: wrap;
+}
+
+.lt-rain {
+  color: #64b5f6;
+  font-weight: 700;
+}
+
+// ── Main layout ───────────────────────────────────────────────────────────────
+.lt-main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+
+  &.has-telem {
+    .lt-board  { flex: 1; min-width: 0; }
+    .lt-telem  { flex: 0 0 320px; }
+  }
+}
+
+// ── Leaderboard ───────────────────────────────────────────────────────────────
+.lt-board {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: auto;
+}
+
+.lt-board-header {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 7px 16px 7px 20px;
+  background: #0d0d14;
+  border-bottom: 1px solid #222;
+  font-size: 10px;
+  font-weight: 700;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  min-width: 600px;
+}
+
+// Column widths
+.col-pos     { width: 36px;  flex-shrink: 0; }
+.col-driver  { width: 180px; flex-shrink: 0; }
+.col-gap     { width: 80px;  flex-shrink: 0; }
+.col-int     { width: 80px;  flex-shrink: 0; }
+.col-lap     { width: 100px; flex-shrink: 0; }
+.col-sectors { flex: 1; min-width: 160px; }
+.col-tyre    { width: 60px;  flex-shrink: 0; }
+
+.lt-row {
+  display: flex;
+  align-items: center;
+  padding: 0 16px 0 4px;
+  border-bottom: 1px solid #111;
+  cursor: pointer;
+  position: relative;
+  transition: background .12s;
+  min-width: 600px;
+  min-height: 38px;
+
+  &:hover         { background: #14141e; }
+  &--selected     { background: #16161f; box-shadow: inset 0 0 0 1px #333; }
+  &--leader       { }
+}
+
+.lt-stripe {
+  width: 4px;
+  min-height: 38px;
+  flex-shrink: 0;
+  border-radius: 2px 0 0 2px;
+  margin-right: 8px;
+}
+
+.lt-pos {
+  font-size: 13px;
+  font-weight: 700;
+  color: #888;
+  text-align: center;
+  &--p1 { color: #FFD700; }
+}
+
+.lt-driver-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lt-num {
+  font-size: 12px;
+  font-weight: 900;
+  width: 26px;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.lt-abbr {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.5px;
+  width: 38px;
+}
+
+.lt-team {
+  font-size: 10px;
+  color: #666;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lt-gap, .lt-int {
+  font-size: 11px;
+  color: #bbb;
+  font-variant-numeric: tabular-nums;
+}
+
+.lt-lap-time {
+  font-size: 12px;
+  font-weight: 600;
+  color: #ccc;
+  font-variant-numeric: tabular-nums;
+  font-family: 'Courier New', monospace;
+}
+
+.lt-sectors {
+  font-size: 10px;
+  color: #666;
+  font-variant-numeric: tabular-nums;
+  font-family: 'Courier New', monospace;
+}
+
+.lt-tyre {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.lt-tyre-dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 9px;
+  font-weight: 900;
+  color: #000;
+  flex-shrink: 0;
+}
+
+.lt-tyre-age {
+  font-size: 9px;
+  color: #666;
+}
+
+// ── Telemetry panel ────────────────────────────────────────────────────────────
+.lt-telem {
+  display: flex;
+  flex-direction: column;
+  background: #0e0e1a;
+  border-left: 1px solid #1a1a28;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.lt-telem-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px 8px;
+  border-bottom: 1px solid #1a1a28;
+  background: #0a0a14;
+}
+
+.lt-telem-driver {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lt-telem-num {
+  font-size: 28px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.lt-telem-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 1px;
+}
+
+.lt-telem-team {
+  font-size: 10px;
+  color: #777;
+  text-transform: uppercase;
+}
+
+.lt-telem-close {
+  background: transparent;
+  border: 1px solid #333;
+  color: #666;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all .15s;
+  &:hover { border-color: #E8002D; color: #E8002D; }
+}
+
+.lt-telem-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 14px;
+  color: #666;
+  font-size: 12px;
+}
+
+// Speed + Gear block
+.lt-speed-block {
+  display: flex;
+  align-items: flex-end;
+  gap: 0;
+  padding: 16px 14px 8px;
+  position: relative;
+}
+
+.lt-speed-val {
+  font-size: 54px;
+  font-weight: 900;
+  color: #fff;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -2px;
+}
+
+.lt-speed-unit {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 8px;
+  margin-left: 4px;
+}
+
+.lt-gear-block {
+  margin-left: auto;
+  text-align: center;
+}
+
+.lt-gear-label {
+  font-size: 9px;
+  color: #666;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.lt-gear-val {
+  font-size: 44px;
+  font-weight: 900;
+  color: #E8002D;
+  line-height: 1;
+}
+
+// DRS indicator
+.lt-drs {
+  margin: 0 14px 10px;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-align: center;
+  background: #111;
+  border: 1px solid #222;
+  color: #555;
+  transition: all .2s;
+
+  &--active {
+    background: #0a1f0a;
+    border-color: #1a4d1a;
+    color: #4caf50;
+    box-shadow: 0 0 8px rgba(76, 175, 80, .3);
+    animation: drs-glow 1s infinite alternate;
+  }
+}
+
+@keyframes drs-glow {
+  from { box-shadow: 0 0 6px rgba(76, 175, 80, .3); }
+  to   { box-shadow: 0 0 14px rgba(76, 175, 80, .6); }
+}
+
+// Throttle / Brake bars
+.lt-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 14px 12px;
+}
+
+.lt-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lt-bar-label {
+  font-size: 9px;
+  font-weight: 700;
+  color: #666;
+  letter-spacing: 1px;
+  width: 36px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.lt-bar-track {
+  flex: 1;
+  height: 12px;
+  background: #1a1a2a;
+  border-radius: 3px;
+  overflow: hidden;
+  border: 1px solid #222;
+}
+
+.lt-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width .2s ease-out;
+}
+
+.lt-bar-throttle { background: linear-gradient(90deg, #1b5e20, #4caf50); }
+.lt-bar-brake    { background: linear-gradient(90deg, #7f0000, #f44336); }
+.lt-bar-rpm      { background: linear-gradient(90deg, #1a237e, #3f51b5, #7986cb); }
+
+.lt-bar-val {
+  font-size: 10px;
+  color: #aaa;
+  width: 38px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+// Speed chart
+.lt-chart-wrap {
+  padding: 0 14px 14px;
+}
+
+.lt-chart-title {
+  font-size: 9px;
+  color: #555;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.lt-chart {
+  width: 100%;
+  height: 80px;
+  background: #0a0a14;
+  border-radius: 4px;
+  border: 1px solid #1a1a28;
+  display: block;
+}
+
+// ── Scrollbar ─────────────────────────────────────────────────────────────────
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #0a0a0f; }
+::-webkit-scrollbar-thumb { background: #222; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #333; }
+
+// ── Tab bar ───────────────────────────────────────────────────────────────────
+.lt-tabs {
+  display: flex;
+  gap: 0;
+  background: #0d0d14;
+  border-bottom: 1px solid #1a1a28;
+  padding: 0 16px;
+  flex-shrink: 0;
+}
+
+.lt-tab {
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: #666;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  padding: 10px 16px 8px;
+  cursor: pointer;
+  transition: all .15s;
+
+  &:hover { color: #aaa; }
+
+  &--active {
+    color: #fff;
+    border-bottom-color: #E8002D;
+  }
+}
+
+// ── Tyre Strategy section ─────────────────────────────────────────────────────
+.ts-section {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 16px 24px;
+}
+
+// Legend
+.ts-legend {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.ts-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: #777;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ts-legend-dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-size: 9px;
+  font-weight: 900;
+  color: #000;
+  flex-shrink: 0;
+}
+
+// Rows
+.ts-row {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border-bottom: 1px solid #111;
+  min-height: 34px;
+  padding: 3px 0;
+
+  &:hover .ts-timeline { background: #111; }
+}
+
+// Driver column
+.ts-driver-col {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 90px;
+  flex-shrink: 0;
+  padding-right: 10px;
+}
+
+.ts-stripe {
+  width: 3px;
+  height: 28px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.ts-pos {
+  font-size: 11px;
+  font-weight: 700;
+  color: #666;
+  width: 18px;
+  text-align: center;
+  flex-shrink: 0;
+
+  &--p1 { color: #FFD700; }
+}
+
+.ts-abbr {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+// Timeline
+.ts-timeline {
+  flex: 1;
+  display: flex;
+  align-items: stretch;
+  height: 24px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #0e0e1a;
+  gap: 2px;
+  padding: 0 2px;
+  min-width: 0;
+}
+
+.ts-stint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  position: relative;
+  min-width: 6px;
+  overflow: hidden;
+  transition: filter .15s;
+  flex-shrink: 0;
+  opacity: .85;
+
+  &--current {
+    opacity: 1;
+    box-shadow: 0 0 6px rgba(255,255,255,.25);
+    // animated right edge = still running
+    &::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: rgba(255,255,255,.6);
+      animation: stint-live .8s ease-in-out infinite alternate;
+    }
+  }
+
+  &:hover { filter: brightness(1.25); opacity: 1; }
+}
+
+@keyframes stint-live {
+  from { opacity: .3; }
+  to   { opacity: 1; }
+}
+
+.ts-stint-label {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 9px;
+  font-weight: 900;
+  color: #000;
+  white-space: nowrap;
+  overflow: hidden;
+  padding: 0 3px;
+  pointer-events: none;
+}
+
+.ts-stint-laps {
+  font-size: 8px;
+  font-weight: 700;
+  color: rgba(0,0,0,.7);
+}
+
+// Summary column
+.ts-summary {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 90px;
+  flex-shrink: 0;
+  padding-left: 10px;
+}
+
+.ts-tyre-dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 9px;
+  font-weight: 900;
+  color: #000;
+  flex-shrink: 0;
+}
+
+.ts-age {
+  font-size: 11px;
+  color: #999;
+  font-variant-numeric: tabular-nums;
+}
+
+.ts-pits {
+  font-size: 10px;
+  color: #666;
+  font-variant-numeric: tabular-nums;
+  margin-left: 2px;
+}
+
+// ── Responsive ────────────────────────────────────────────────────────────────
+@media (max-width: 800px) {
+  .lt-telem {
+    width: 100%;
+    border-left: none;
+    border-top: 1px solid #1a1a28;
+  }
+
+  .lt-main.has-telem {
+    flex-direction: column;
+    .lt-telem { flex: 0 0 auto; }
+  }
+
+  .lt-board-header,
+  .lt-row { min-width: 520px; }
+
+  .col-sectors { display: none; }
+}
+
+// ── Tab badge ─────────────────────────────────────────────────────────────────
+.lt-tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #E8002D;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 900;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  margin-left: 5px;
+  line-height: 1;
+}
+
+// ── Radio section ─────────────────────────────────────────────────────────────
+.rd-section {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+// Filter bar
+.rd-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px 8px;
+  background: #0d0d14;
+  border-bottom: 1px solid #1a1a28;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.rd-filter-label {
+  font-size: 10px;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  flex-shrink: 0;
+}
+
+.rd-filter-btn {
+  background: transparent;
+  border: 1px solid #222;
+  color: #666;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 3px 9px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all .12s;
+
+  &:hover { border-color: #444; color: #aaa; }
+
+  &--active {
+    background: rgba(232,0,45,.12);
+    border-color: #E8002D;
+    color: #fff;
+  }
+}
+
+// Message rows
+.rd-msg {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid #0f0f1a;
+  transition: background .12s;
+
+  &:hover { background: #0e0e18; }
+
+  &--playing {
+    background: #0c0c1a;
+    border-left: 3px solid #E8002D;
+    padding-left: 13px;
+  }
+}
+
+// Driver badge
+.rd-driver {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 110px;
+  flex-shrink: 0;
+
+  &--unknown { color: #555; }
+}
+
+.rd-driver-stripe {
+  width: 3px;
+  height: 32px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.rd-num {
+  font-size: 11px;
+  font-weight: 900;
+  width: 24px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.rd-driver-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  overflow: hidden;
+}
+
+.rd-abbr {
+  font-size: 13px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 0.5px;
+}
+
+.rd-team {
+  font-size: 9px;
+  color: #666;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// Play button
+.rd-play {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #1a1a2a;
+  border: 1px solid #2a2a3a;
+  color: #aaa;
+  font-size: 13px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all .15s;
+
+  &:hover {
+    background: #222235;
+    border-color: #E8002D;
+    color: #fff;
+  }
+
+  &--active {
+    background: rgba(232,0,45,.2);
+    border-color: #E8002D;
+    color: #E8002D;
+  }
+}
+
+// Meta: waveform + timestamp
+.rd-meta {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+// Animated waveform bars
+.rd-waveform {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 24px;
+}
+
+.rd-bar {
+  width: 3px;
+  background: #333;
+  border-radius: 2px;
+  height: 6px;
+  transition: background .2s;
+
+  .rd-waveform--playing & {
+    background: #E8002D;
+    animation: rd-wave .6s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes rd-wave {
+  from { height: 4px; opacity: .5; }
+  to   { height: 22px; opacity: 1; }
+}
+
+.rd-time {
+  font-size: 10px;
+  color: #555;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  margin-left: auto;
+  flex-shrink: 0;
+}

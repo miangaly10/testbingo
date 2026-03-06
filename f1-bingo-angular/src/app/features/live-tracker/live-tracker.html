@@ -1,0 +1,361 @@
+<div class="lt-shell">
+
+  <!-- ── Top bar ─────────────────────────────────────────────────────────── -->
+  <header class="lt-header">
+    <button class="lt-back" (click)="goBack()">← Retour</button>
+
+    @if (session()) {
+      <div class="lt-session-info">
+        <span class="lt-session-name">{{ session()!.country_name }} — {{ session()!.session_name }}</span>
+        <span class="lt-circuit">{{ session()!.circuit_short_name }}</span>
+      </div>
+      <div class="lt-status-badge" [class]="sessionStatus().includes('LIVE') ? 'live' : ''">
+        {{ sessionStatus() }}
+      </div>
+    } @else {
+      <div class="lt-session-info"><span class="lt-session-name">Live Tracker</span></div>
+    }
+
+    <div class="lt-header-right">
+      @if (lastUpdate()) {
+        <span class="lt-update">Mis à jour {{ lastUpdate() | date:'HH:mm:ss' }}</span>
+      }
+      <span class="lt-logo">📡 OpenF1</span>
+    </div>
+  </header>
+
+  <!-- ── Loading / error ───────────────────────────────────────────────────── -->
+  @if (loading()) {
+    <div class="lt-loading">
+      <div class="lt-spinner"></div>
+      <p>Connexion à OpenF1…</p>
+    </div>
+  } @else if (error()) {
+    <div class="lt-error">⚠️ {{ error() }}</div>
+  } @else {
+
+    <!-- ── Flag / Race Control bar ──────────────────────────────────────────── -->
+    <div class="lt-rc-bar" [class]="trackFlag().cls">
+      <span class="lt-flag-label">{{ trackFlag().label }}</span>
+      @if (latestRCMsg()) {
+        <span class="lt-rc-msg">{{ latestRCMsg() }}</span>
+      }
+    </div>
+
+    <!-- ── Weather strip ────────────────────────────────────────────────────── -->
+    @if (weather()) {
+      <div class="lt-weather">
+        <span>🌡️ Air {{ weather()!.air_temperature | number:'1.0-1' }}°C</span>
+        <span>🛣️ Piste {{ weather()!.track_temperature | number:'1.0-1' }}°C</span>
+        <span>💧 Humidité {{ weather()!.humidity }}%</span>
+        <span>💨 Vent {{ weather()!.wind_speed | number:'1.0-1' }} m/s</span>
+        @if (weather()!.rainfall > 0) {
+          <span class="lt-rain">🌧️ PLUIE</span>
+        }
+      </div>
+    }
+
+    <!-- ── Tab bar ───────────────────────────────────────────────────────── -->
+    <div class="lt-tabs">
+      <button class="lt-tab" [class.lt-tab--active]="activeTab() === 'leaderboard'" (click)="activeTab.set('leaderboard')">
+        🏎️ Classement
+      </button>
+      <button class="lt-tab" [class.lt-tab--active]="activeTab() === 'strategy'" (click)="activeTab.set('strategy')">
+        🔄 Stratégie Pneus
+      </button>
+      <button class="lt-tab" [class.lt-tab--active]="activeTab() === 'radio'" (click)="activeTab.set('radio')">
+        📻 Radio
+        @if (radioMessages().length > 0) {
+          <span class="lt-tab-badge">{{ radioMessages().length }}</span>
+        }
+      </button>
+    </div>
+
+    <!-- ── Main content ────────────────────────────────────────────────────── -->
+    @if (activeTab() === 'leaderboard') {
+    <div class="lt-main" [class.has-telem]="selectedDriver() !== null">
+
+      <!-- ── Leaderboard ────────────────────────────────────────────────────── -->
+      <section class="lt-board">
+        <div class="lt-board-header">
+          <span class="col-pos">POS</span>
+          <span class="col-driver">PILOTE</span>
+          <span class="col-gap">ÉCART</span>
+          <span class="col-int">INT</span>
+          <span class="col-lap">DERNIER TOUR</span>
+          <span class="col-sectors">S1 · S2 · S3</span>
+          <span class="col-tyre">PNEU</span>
+        </div>
+
+        @for (row of leaderboard(); track row.driver.driver_number) {
+          <div
+            class="lt-row"
+            [class.lt-row--selected]="selectedDriver()?.driver_number === row.driver.driver_number"
+            [class.lt-row--leader]="row.pos === 1"
+            (click)="selectDriver(row.driver)"
+          >
+            <!-- Team color stripe -->
+            <div class="lt-stripe" [ngStyle]="{'background': '#' + row.driver.team_colour}"></div>
+
+            <!-- Position -->
+            <span class="col-pos lt-pos" [class.lt-pos--p1]="row.pos === 1">{{ row.pos }}</span>
+
+            <!-- Driver -->
+            <div class="col-driver lt-driver-info">
+              <span class="lt-num" [ngStyle]="{'color': '#' + row.driver.team_colour}">{{ row.driver.driver_number }}</span>
+              <span class="lt-abbr">{{ row.driver.name_acronym }}</span>
+              <span class="lt-team">{{ row.driver.team_name }}</span>
+            </div>
+
+            <!-- Gap -->
+            <span class="col-gap lt-gap">{{ row.gap }}</span>
+
+            <!-- Interval -->
+            <span class="col-int lt-int">{{ row.interval }}</span>
+
+            <!-- Last lap -->
+            <span class="col-lap lt-lap-time">{{ row.lastLap ?? '—:——.———' }}</span>
+
+            <!-- Sectors -->
+            <span class="col-sectors lt-sectors">
+              {{ row.s1 ?? '——.———' }} · {{ row.s2 ?? '——.———' }} · {{ row.s3 ?? '——.———' }}
+            </span>
+
+            <!-- Tyre -->
+            <div class="col-tyre lt-tyre">
+              <span class="lt-tyre-dot" [ngStyle]="{'background': compoundColor(row.compound)}">
+                {{ compoundAbbr(row.compound) }}
+              </span>
+              <span class="lt-tyre-age">+{{ row.tyreAge }}L</span>
+            </div>
+          </div>
+        }
+
+        @if (leaderboard().length === 0) {
+          <div class="lt-empty">Aucune donnée de course disponible.<br>La session n'est peut-être pas encore commencée.</div>
+        }
+      </section>
+
+      <!-- ── Telemetry panel ────────────────────────────────────────────────── -->
+      @if (selectedDriver(); as drv) {
+        <aside class="lt-telem">
+          <div class="lt-telem-header">
+            <div class="lt-telem-driver">
+              <span class="lt-telem-num" [ngStyle]="{'color': '#' + drv.team_colour}">{{ drv.driver_number }}</span>
+              <div>
+                <div class="lt-telem-name">{{ drv.name_acronym }}</div>
+                <div class="lt-telem-team">{{ drv.team_name }}</div>
+              </div>
+            </div>
+            <button class="lt-telem-close" (click)="selectDriver(drv)">✕</button>
+          </div>
+
+          @if (latestCarData(); as cd) {
+            <!-- Speed + Gear -->
+            <div class="lt-speed-block">
+              <div class="lt-speed-val">{{ cd.speed }}</div>
+              <div class="lt-speed-unit">km/h</div>
+              <div class="lt-gear-block">
+                <div class="lt-gear-label">GEAR</div>
+                <div class="lt-gear-val">{{ cd.n_gear }}</div>
+              </div>
+            </div>
+
+            <!-- DRS -->
+            <div class="lt-drs" [class.lt-drs--active]="drsActive(cd)">
+              DRS {{ drsActive(cd) ? '▶ OUVERT' : '▪ FERMÉ' }}
+            </div>
+
+            <!-- Throttle + Brake -->
+            <div class="lt-bars">
+              <div class="lt-bar-row">
+                <span class="lt-bar-label">THROT</span>
+                <div class="lt-bar-track">
+                  <div class="lt-bar-fill lt-bar-throttle" [ngStyle]="{'width': cd.throttle + '%'}"></div>
+                </div>
+                <span class="lt-bar-val">{{ cd.throttle }}%</span>
+              </div>
+              <div class="lt-bar-row">
+                <span class="lt-bar-label">BRAKE</span>
+                <div class="lt-bar-track">
+                  <div class="lt-bar-fill lt-bar-brake" [ngStyle]="{'width': cd.brake + '%'}"></div>
+                </div>
+                <span class="lt-bar-val">{{ cd.brake }}%</span>
+              </div>
+              <div class="lt-bar-row">
+                <span class="lt-bar-label">RPM</span>
+                <div class="lt-bar-track">
+                  <div class="lt-bar-fill lt-bar-rpm" [ngStyle]="{'width': rpmPercent() + '%'}"></div>
+                </div>
+                <span class="lt-bar-val">{{ cd.rpm | number:'1.0-0' }}</span>
+              </div>
+            </div>
+
+            <!-- Speed trace chart -->
+            @if (speedPoints()) {
+              <div class="lt-chart-wrap">
+                <div class="lt-chart-title">⚡ SPEED TRACE</div>
+                <svg class="lt-chart" viewBox="0 0 400 80" preserveAspectRatio="none">
+                  <!-- Grid lines -->
+                  <line x1="0" y1="20" x2="400" y2="20" stroke="#333" stroke-width="0.5"/>
+                  <line x1="0" y1="40" x2="400" y2="40" stroke="#333" stroke-width="0.5"/>
+                  <line x1="0" y1="60" x2="400" y2="60" stroke="#333" stroke-width="0.5"/>
+                  <!-- Speed labels -->
+                  <text x="2" y="19" fill="#555" font-size="7">370</text>
+                  <text x="2" y="39" fill="#555" font-size="7">185</text>
+                  <text x="2" y="58" fill="#555" font-size="7">0</text>
+                  <!-- Speed trace -->
+                  <polyline
+                    [attr.points]="speedPoints()"
+                    fill="none"
+                    [attr.stroke]="'#' + drv.team_colour"
+                    stroke-width="1.5"
+                    stroke-linejoin="round"
+                    stroke-linecap="round"
+                  />
+                </svg>
+              </div>
+            }
+
+          } @else {
+            <div class="lt-telem-loading">
+              <div class="lt-spinner-sm"></div>
+              <span>Chargement télémétrie…</span>
+            </div>
+          }
+        </aside>
+      }
+    </div>
+    } <!-- /leaderboard tab -->
+
+    <!-- ── Strategy tab ──────────────────────────────────────────────────── -->
+    @if (activeTab() === 'strategy') {
+    <section class="ts-section">
+
+      <!-- Legend -->
+      <div class="ts-legend">
+        @for (c of ['SOFT','MEDIUM','HARD','INTERMEDIATE','WET']; track c) {
+          <span class="ts-legend-item">
+            <span class="ts-legend-dot" [ngStyle]="{'background': compoundColor(c)}">{{ compoundAbbr(c) }}</span>
+            {{ c }}
+          </span>
+        }
+      </div>
+
+      <!-- Strategy rows -->
+      @if (tyreStrategy().length === 0) {
+        <div class="lt-empty">Aucune donnée de stratégie disponible.</div>
+      }
+
+      @for (row of tyreStrategy(); track row.driver.driver_number) {
+        <div class="ts-row">
+
+          <!-- Driver column -->
+          <div class="ts-driver-col">
+            <div class="ts-stripe" [ngStyle]="{'background': '#' + row.driver.team_colour}"></div>
+            <span class="ts-pos" [class.ts-pos--p1]="row.pos === 1">{{ row.pos }}</span>
+            <span class="ts-abbr" [ngStyle]="{'color': '#' + row.driver.team_colour}">{{ row.driver.name_acronym }}</span>
+          </div>
+
+          <!-- Timeline -->
+          <div class="ts-timeline">
+            @for (s of row.stints; track $index) {
+              <div
+                class="ts-stint"
+                [class.ts-stint--current]="s.isCurrent"
+                [ngStyle]="{
+                  'width':      stintWidthPct(s.laps) + '%',
+                  'background': compoundColor(s.compound)
+                }"
+                [title]="compoundAbbr(s.compound) + ' · L' + s.lapStart + '–' + s.lapEnd + ' (' + s.laps + ' tours)'"
+              >
+                <span class="ts-stint-label">
+                  {{ compoundAbbr(s.compound) }}
+                  @if (s.laps >= 5) { <span class="ts-stint-laps">{{ s.laps }}</span> }
+                </span>
+              </div>
+            }
+          </div>
+
+          <!-- Summary -->
+          <div class="ts-summary">
+            <span class="ts-tyre-dot" [ngStyle]="{'background': compoundColor(row.currentCompound)}">
+              {{ compoundAbbr(row.currentCompound) }}
+            </span>
+            <span class="ts-age">{{ row.currentAge }}L</span>
+            @if (row.pitCount > 0) {
+              <span class="ts-pits">{{ row.pitCount }} 🔧</span>
+            }
+          </div>
+
+        </div>
+      }
+    </section>
+    } <!-- /strategy tab -->
+
+    <!-- ── Radio tab ─────────────────────────────────────────────────────────── -->
+    @if (activeTab() === 'radio') {
+    <section class="rd-section">
+
+      <!-- Filter bar -->
+      <div class="rd-filter-bar">
+        <span class="rd-filter-label">Filtrer :</span>
+        <button class="rd-filter-btn" [class.rd-filter-btn--active]="radioFilter() === null" (click)="radioFilter.set(null)">
+          Tous
+        </button>
+        @for (d of drivers(); track d.driver_number) {
+          <button
+            class="rd-filter-btn"
+            [class.rd-filter-btn--active]="radioFilter() === d.driver_number"
+            [ngStyle]="radioFilter() === d.driver_number ? {'border-color': '#' + d.team_colour, 'color': '#' + d.team_colour} : {}"
+            (click)="radioFilter.set(radioFilter() === d.driver_number ? null : d.driver_number)"
+          >{{ d.name_acronym }}</button>
+        }
+      </div>
+
+      <!-- Messages -->
+      @if (radioFiltered().length === 0) {
+        <div class="lt-empty">Aucun message radio disponible.</div>
+      }
+
+      @for (msg of radioFiltered(); track msg.date + msg.driver?.driver_number) {
+        <div class="rd-msg" [class.rd-msg--playing]="msg.playing">
+
+          <!-- Driver badge -->
+          @if (msg.driver; as drv) {
+            <div class="rd-driver">
+              <div class="rd-driver-stripe" [ngStyle]="{'background': '#' + drv.team_colour}"></div>
+              <span class="rd-num" [ngStyle]="{'color': '#' + drv.team_colour}">{{ drv.driver_number }}</span>
+              <div class="rd-driver-info">
+                <span class="rd-abbr">{{ drv.name_acronym }}</span>
+                <span class="rd-team">{{ drv.team_name }}</span>
+              </div>
+            </div>
+          } @else {
+            <div class="rd-driver rd-driver--unknown">
+              <span class="rd-abbr">???</span>
+            </div>
+          }
+
+          <!-- Play button -->
+          <button class="rd-play" (click)="playRadio(msg)" [class.rd-play--active]="msg.playing">
+            @if (msg.playing) { ⏹ } @else { ▶ }
+          </button>
+
+          <!-- Waveform + time -->
+          <div class="rd-meta">
+            <div class="rd-waveform" [class.rd-waveform--playing]="msg.playing">
+              @for (b of [1,2,3,4,5,6,7,8]; track b) {
+                <div class="rd-bar" [style.animation-delay]="(b * 0.1) + 's'"></div>
+              }
+            </div>
+            <span class="rd-time">{{ radioFmtTime(msg.date) }}</span>
+          </div>
+
+        </div>
+      }
+    </section>
+    } <!-- /radio tab -->
+
+  }
+</div>

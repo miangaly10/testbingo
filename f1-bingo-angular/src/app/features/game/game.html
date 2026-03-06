@@ -147,6 +147,9 @@
       <div class="gp-countdown">
         <span class="gp-label">🏁 <img class="gp-flag-img" [src]="'https://flagcdn.com/20x15/' + nextGpCc() + '.png'" [alt]="nextGpName()" /> {{ nextGpName() }}</span>
         <span class="gp-timer">{{ countdown() }}</span>
+        <button class="gp-live-btn" (click)="openLiveTracker()" title="Tracker live de la course">
+          📡 Live
+        </button>
       </div>
     </div>
 
