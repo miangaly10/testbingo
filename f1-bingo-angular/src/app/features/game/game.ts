@@ -165,6 +165,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
   isOwner    = this._auth.isOwner;
   editMode   = this.game.editMode;
+  seasonLocked = this.game.seasonLocked;
   lineStats  = this.game.lineStatuses;
   showWin    = this.game.showWin;
   winMessage = this.game.winMessage;
@@ -184,6 +185,14 @@ export class GameComponent implements OnInit, OnDestroy {
       if (s >= 3) {
         this._toast.show(`🔥 ${s} en série !`, 'info', 2200);
         if (s % 3 === 0) this._sound.playStreak();
+      }
+    });
+
+    // First-finder bonus toast
+    effect(() => {
+      const ff = this.game.firstFinder();
+      if (ff) {
+        this._toast.show(`🥇 Premier sur ${ff.emoji} ${ff.tag} ! +1 pt`, 'success', 2500);
       }
     });
 

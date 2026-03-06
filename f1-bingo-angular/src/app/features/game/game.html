@@ -122,10 +122,16 @@
     <!-- Controls -->
     @if (isOwner() && !isSpectating()) {
       <div class="controls">
-        <button class="btn bg" (click)="toggleEditMode()">
-          ✏️ {{ editMode() ? 'Terminer édition' : 'Modifier la grille' }}
-        </button>
-        <button class="btn bs" (click)="resetGrid()">↺ Réinitialiser ma grille</button>
+        @if (seasonLocked()) {
+          <button class="btn bg" disabled title="La saison a commencé — la grille est verrouillée">
+            🔒 Grille verrouillée (saison en cours)
+          </button>
+        } @else {
+          <button class="btn bg" (click)="toggleEditMode()">
+            ✏️ {{ editMode() ? 'Terminer édition' : 'Modifier la grille' }}
+          </button>
+        }
+        <button class="btn bs" (click)="resetGrid()" [disabled]="seasonLocked()" [title]="seasonLocked() ? 'Grille verrouillée' : ''">&#8634; Réinitialiser ma grille</button>
         <button class="btn bp" (click)="finishRace()">🏁 Terminer la course</button>
       </div>
     }

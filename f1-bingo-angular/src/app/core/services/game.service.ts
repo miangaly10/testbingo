@@ -5,6 +5,9 @@ import { DEFAULT_CELLS, BINGO_LINES, SCORE_MAP } from '../data/cells.data';
 import { DataService } from './data.service';
 import { AuthService } from './auth.service';
 
+// La grille se verrouille au début du GP d'Australie
+const SEASON_LOCK_DATE = new Date('2026-03-08T04:00:00Z');
+
 export interface LineStatus {
   id: string;
   done: boolean;
@@ -19,12 +22,16 @@ export class GameService {
   private _winMessage = signal('');
   private _streak = signal(0);
   private _streakTimer: ReturnType<typeof setTimeout> | null = null;
+  private _firstFinder = signal<{ tag: string; emoji: string } | null>(null);
 
-  readonly cells       = this._cells.asReadonly();
-  readonly editMode    = this._editMode.asReadonly();
-  readonly showWin     = this._showWin.asReadonly();
-  readonly winMessage  = this._winMessage.asReadonly();
-  readonly streak      = this._streak.asReadonly();
+  readonly cells        = this._cells.asReadonly();
+  readonly editMode     = this._editMode.asReadonly();
+  readonly showWin      = this._showWin.asReadonly();
+  readonly winMessage   = this._winMessage.asReadonly();
+  readonly streak       = this._streak.asReadonly();
+  readonly firstFinder  = this._firstFinder.asReadonly();
+
+  readonly seasonLocked  = computed(() => Date.now() >= SEASON_LOCK_DATE.getTime());
 
   readonly lineStatuses = computed<LineStatus[]>(() => {
     const playerId = this._auth.currentPlayerId();
@@ -84,16 +91,28 @@ export class GameService {
     let score = p.score ?? 0;
     const prob = this._cells()[idx]?.prob || 'pm';
     const pts = SCORE_MAP[prob] ?? 0;
+    const cell = this._cells()[idx];
+
+    // First-finder: is this cell already checked by at least one OTHER player?
+    const otherHasIt = Object.values(this._data.players())
+      .some(other => other.id !== id && (other.checked ?? []).includes(idx));
 
     if (ch.has(idx)) {
       ch.delete(idx);
       score = Math.max(0, score - pts);
+      // Reprise du bonus si cet joueur était le seul à l'avoir cochée
+      if (!otherHasIt) score = Math.max(0, score - 1);
       // reset streak on uncheck
       this._streak.set(0);
       if (this._streakTimer) { clearTimeout(this._streakTimer); this._streakTimer = null; }
     } else {
       ch.add(idx);
       score += pts;
+      // Bonus +1 si premier joueur à cocher cette cellule
+      if (!otherHasIt) {
+        score += 1;
+        this._firstFinder.set({ tag: cell?.tag ?? '', emoji: cell?.emoji ?? '🥇' });
+      }
       // increment streak, auto-reset after 7 s of inactivity
       this._streak.update(s => s + 1);
       if (this._streakTimer) clearTimeout(this._streakTimer);
@@ -106,6 +125,7 @@ export class GameService {
 
   /** Swap two cells and persist */
   async swapCells(a: number, b: number): Promise<void> {
+    if (this.seasonLocked()) return;
     const cells = [...this._cells()];
     const tmpA = JSON.parse(JSON.stringify(cells[a]));
     const tmpB = JSON.parse(JSON.stringify(cells[b]));
@@ -117,6 +137,7 @@ export class GameService {
 
   /** Update a single cell (from edit modal) */
   async updateCell(idx: number, patch: Partial<Cell>): Promise<void> {
+    if (this.seasonLocked()) return;
     const cells = [...this._cells()];
     cells[idx] = { ...cells[idx], ...patch };
     this._cells.set(cells);
@@ -169,6 +190,7 @@ export class GameService {
   }
 
   toggleEditMode(): void {
+    if (this.seasonLocked()) return;
     this._editMode.update(v => !v);
   }
 
