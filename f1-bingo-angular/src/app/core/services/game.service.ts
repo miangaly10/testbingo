@@ -118,7 +118,7 @@ export class GameService {
       ch.delete(idx);
       score = Math.max(0, score - pts);
       // Reprise du bonus : personne ne l'avait trouvé dans un GP précédent
-      if (!foundInPreviousGp) score = Math.max(0, score - 1);
+      if (!foundInPreviousGp) score = Math.max(0, score - 10);
       delete checkedGp[idx];
       // reset streak on uncheck
       this._streak.set(0);
@@ -126,9 +126,9 @@ export class GameService {
     } else {
       ch.add(idx);
       score += pts;
-      // +1 bonus si personne ne l'a trouvé dans un GP précédent (même GP = même bonus)
+      // +10 bonus si personne ne l'a trouvé dans un GP précédent (même GP = même bonus)
       if (!foundInPreviousGp) {
-        score += 1;
+        score += 10;
         this._firstFinder.set({ tag: cell?.tag ?? '', emoji: cell?.emoji ?? '🥇' });
       }
       checkedGp[idx] = currentGpIdx;
@@ -172,27 +172,48 @@ export class GameService {
     const ch = new Set<number>(p.checked);
     const prevDone = new Set(this._doneLines());
     let newLine = false;
+    let lineBonus = 0;
+    let firstLineName = '';
+    const bonusedLines = new Set<string>(p.bonusLines ?? []);
 
     for (const line of BINGO_LINES) {
       const done = line.els.every(i => ch.has(i));
       if (done && !prevDone.has(line.id)) {
         prevDone.add(line.id);
         newLine = true;
-      } else if (!done) {
+        // Bonus : premier joueur à compléter cette ligne (horizontale, verticale ou diagonale)
+        const otherHasLine = Object.values(this._data.players())
+          .some(other => other.id !== id && other.doneLines?.includes(line.id));
+        if (!otherHasLine) {
+          lineBonus += 15;
+          bonusedLines.add(line.id);
+          if (!firstLineName) {
+            const type = line.id.startsWith('r') ? '➡️ horizontale' :
+                         line.id.startsWith('c') ? '⬇️ verticale' : '↗️ diagonale';
+            firstLineName = type;
+          }
+        }
+      } else if (!done && prevDone.has(line.id)) {
         prevDone.delete(line.id);
+        // Retrait du bonus de ligne si le joueur l'avait obtenu
+        if (bonusedLines.has(line.id)) {
+          lineBonus -= 15;
+          bonusedLines.delete(line.id);
+        }
       }
     }
 
+    const updatedScore = Math.max(0, (p.score ?? 0) + lineBonus);
     this._doneLines.set(prevDone);
-    await this._data.updatePlayer({ ...p, lines: prevDone.size, doneLines: [...prevDone] });
+    await this._data.updatePlayer({ ...p, score: updatedScore, lines: prevDone.size, doneLines: [...prevDone], bonusLines: [...bonusedLines] });
 
     // Full House: all 25 checked
     const fullHouse = ch.size === 25 && !prevDone.has('full');
     if (fullHouse) {
       prevDone.add('full');
       this._doneLines.set(prevDone);
-      const bingoLineCount = [...prevDone].filter(id => id !== 'full').length;
-      await this._data.updatePlayer({ ...p, lines: bingoLineCount, doneLines: [...prevDone] });
+      const bingoLineCount = [...prevDone].filter(lineId => lineId !== 'full').length;
+      await this._data.updatePlayer({ ...p, score: updatedScore, lines: bingoLineCount, doneLines: [...prevDone], bonusLines: [...bonusedLines] });
       this._winMessage.set(`🏆 FULL HOUSE ! ${p.name} a coché toutes les 25 cases ! 🏆`);
       this._showWin.set(true);
       return true;
@@ -202,7 +223,8 @@ export class GameService {
     this._doneLines.set(prevDone);
 
     if (animate && newLine) {
-      this._winMessage.set(`🏁 ${p.name} a une ligne ! 🏁`);
+      const bonusMsg = lineBonus > 0 ? ` (+${lineBonus} pts bonus ligne ${firstLineName} !)` : '';
+      this._winMessage.set(`🏁 ${p.name} a une ligne !${bonusMsg} 🏁`);
       this._showWin.set(true);
     }
     return newLine;

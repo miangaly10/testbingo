@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Red background with rounded corners -->
+  <rect width="32" height="32" rx="6" fill="#E8002D"/>
+  <!-- "F" letter -->
+  <text x="3" y="23" font-family="Arial Black, Arial, sans-serif" font-weight="900"
+        font-size="20" fill="#FFFFFF" letter-spacing="-1">F1</text>
+  <!-- Gold underline accent -->
+  <rect x="3" y="25" width="26" height="2.5" rx="1" fill="#FFD700"/>
+</svg>

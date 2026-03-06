@@ -3,6 +3,17 @@
   <div class="ps-title">F1 BINGO</div>
   <div class="ps-sub">Choisissez votre profil joueur</div>
 
+  <!-- GP Countdown -->
+  <div class="gp-countdown">
+    <span class="gp-label">Prochain GP</span>
+    <span style="font-size:18px">{{ nextGpFlag() }}</span>
+    <span class="gp-label" style="color:var(--text)">{{ nextGpName() }}</span>
+    <span class="gp-timer">{{ countdown() }}</span>
+  </div>
+
+  <!-- Tutorial button -->
+  <button class="tuto-btn" (click)="toggleTuto()">🎮 Comment jouer ?</button>
+
   <!-- Player list -->
   <div class="player-list">
     @if (players().length === 0) {
@@ -88,6 +99,54 @@
     <button class="btn bp" (click)="addPlayer()">+ Ajouter</button>
   </div>
 </div>
+
+<!-- Tutorial Modal -->
+@if (showTuto()) {
+  <div class="tuto-overlay" (click)="toggleTuto()">
+    <div class="tuto-modal" (click)="$event.stopPropagation()">
+      <button class="tuto-close" (click)="toggleTuto()">✕</button>
+      <div class="tuto-modal-header">
+        <span class="tuto-modal-badge">F1 2026</span>
+        <div class="tuto-modal-title">🎮 Comment jouer ?</div>
+      </div>
+      <p class="tuto-intro">Bienvenue sur F1 Bingo 2026 ! Pendant chaque Grand Prix, cochez les cases de votre grille quand l'événement correspondant se produit en piste.</p>
+      <div class="tuto-section">
+        <div class="tuto-section-title">🎯 Objectif</div>
+        <ul>
+          <li>Complétez un maximum de <strong>lignes bingo</strong> (horizontale, verticale ou diagonale) en cochant les bonnes cases.</li>
+          <li>Visez le <strong>Full House</strong> en cochant les 25 cases !</li>
+        </ul>
+      </div>
+      <div class="tuto-section">
+        <div class="tuto-section-title">🏆 Système de points</div>
+        <div class="tuto-table">
+          <div class="tuto-row">
+            <span class="tuto-pill base">+10 pts</span>
+            <span>Par case cochée</span>
+          </div>
+          <div class="tuto-row">
+            <span class="tuto-pill gold">+10 pts bonus</span>
+            <span>🥇 Premier joueur à cocher une case</span>
+          </div>
+          <div class="tuto-row">
+            <span class="tuto-pill red">+15 pts bonus</span>
+            <span>🏁 Premier à compléter une ligne (➡️ horizontale, ⬇️ verticale ou ↗️ diagonale)</span>
+          </div>
+        </div>
+      </div>
+      <div class="tuto-section">
+        <div class="tuto-section-title">📋 Règles importantes</div>
+        <ul>
+          <li>La grille est <strong>personnalisable</strong> avant la saison, puis se <strong>verrouille</strong> au GP d’Australie.</li>
+          <li>Chaque joueur a <strong>son propre PIN</strong> pour protéger sa grille.</li>
+          <li>Décocher une case <strong>retire les points</strong> (et les bonus associés).</li>
+          <li>Mode <strong>👁️ Vue seule</strong> disponible sans PIN pour observer.</li>
+        </ul>
+      </div>
+      <button class="btn bp" style="width:100%;margin-top:8px" (click)="toggleTuto()">J’ai compris !</button>
+    </div>
+  </div>
+}
 
 <!-- PIN Modal -->
 @if (pinStep() === 'entering' && pendingPlayer()) {

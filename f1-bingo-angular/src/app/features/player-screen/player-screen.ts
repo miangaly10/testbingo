@@ -1,5 +1,5 @@
 import {
-  Component, OnInit, signal, computed, inject
+  Component, OnInit, OnDestroy, signal, computed, inject
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -12,6 +12,7 @@ import { F1_TEAMS } from '../../core/data/teams.data';
 import { F1_DRIVERS } from '../../core/data/drivers.data';
 import { DEFAULT_CELLS } from '../../core/data/cells.data';
 import { Player } from '../../core/models/player.model';
+import { getNextRace, formatCountdown } from '../game/game';
 
 type IconTab = 'emoji' | 'teams' | 'drivers';
 type PinStep = 'idle' | 'entering';
@@ -22,7 +23,7 @@ type PinStep = 'idle' | 'entering';
   imports: [FormsModule, AvatarComponent],
   templateUrl: './player-screen.html',
 })
-export class PlayerScreenComponent implements OnInit {
+export class PlayerScreenComponent implements OnInit, OnDestroy {
   private _data   = inject(DataService);
   private _auth   = inject(AuthService);
   private _router  = inject(Router);
@@ -42,6 +43,16 @@ export class PlayerScreenComponent implements OnInit {
   readonly drivers = F1_DRIVERS;
   emojiDropOpen = signal(false);
 
+  // ── Countdown ──
+  nextGpName = signal(getNextRace().name);
+  nextGpFlag = signal(getNextRace().flag);
+  countdown  = signal(formatCountdown(getNextRace().date));
+  private _countdownId: ReturnType<typeof setInterval> | null = null;
+
+  // ── Tutorial ──
+  showTuto = signal(false);
+  toggleTuto(): void { this.showTuto.update(v => !v); }
+
   // ── PIN modal ──
   pinStep = signal<PinStep>('idle');
   pinDigits = signal<string[]>(['', '', '', '']);
@@ -53,6 +64,16 @@ export class PlayerScreenComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     await this._data.load();
+    this._countdownId = setInterval(() => {
+      const next = getNextRace();
+      this.nextGpName.set(next.name);
+      this.nextGpFlag.set(next.flag);
+      this.countdown.set(formatCountdown(next.date));
+    }, 1000);
+  }
+
+  ngOnDestroy(): void {
+    if (this._countdownId) clearInterval(this._countdownId);
   }
 
   // ── Icon tab ──

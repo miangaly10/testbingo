@@ -92,6 +92,174 @@ body {
   max-width: 420px;
 }
 
+/* ── TUTORIAL ── */
+.tuto-btn {
+  background: rgba(255,255,255,.06);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 8px 20px;
+  color: var(--text);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: background .2s, border-color .2s;
+  &:hover { background: rgba(255,255,255,.12); border-color: var(--gold); }
+}
+
+.tuto-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  background: rgba(0,0,0,.75);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: tutoFadeIn .2s ease;
+}
+
+.tuto-modal {
+  position: relative;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 28px 24px 22px;
+  width: 100%;
+  max-width: 440px;
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: tutoSlideUp .25s ease;
+}
+
+.tuto-close {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  background: rgba(255,255,255,.08);
+  border: none;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .2s;
+  &:hover { background: rgba(255,255,255,.18); color: #fff; }
+}
+
+.tuto-modal-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-right: 32px;
+}
+
+.tuto-modal-badge {
+  display: inline-block;
+  background: var(--red);
+  color: #fff;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 900;
+  font-size: 10px;
+  letter-spacing: 3px;
+  padding: 3px 10px;
+  text-transform: uppercase;
+  clip-path: polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%);
+  align-self: flex-start;
+}
+
+.tuto-modal-title {
+  font-family: 'Russo One', sans-serif;
+  font-size: 20px;
+  color: #fff;
+}
+
+.tuto-intro {
+  font-size: 13px;
+  color: rgba(240,240,255,.7);
+  line-height: 1.6;
+}
+
+.tuto-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
+}
+
+.tuto-section-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.tuto-section ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-left: 4px;
+}
+
+.tuto-section ul li {
+  font-size: 13px;
+  color: rgba(240,240,255,.75);
+  line-height: 1.55;
+  padding-left: 14px;
+  position: relative;
+  &::before { content: '›'; position: absolute; left: 0; color: var(--red); font-weight: 700; }
+}
+
+.tuto-table {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tuto-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: rgba(240,240,255,.75);
+  line-height: 1.4;
+}
+
+.tuto-pill {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  &.base { background: rgba(255,255,255,.12); color: #fff; }
+  &.gold { background: rgba(255,215,0,.2); color: var(--gold); }
+  &.red  { background: rgba(232,0,45,.2);  color: #ff6680; }
+}
+
+@keyframes tutoFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes tutoSlideUp {
+  from { opacity: 0; transform: translateY(20px) scale(.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 .player-list {
   display: flex;
   flex-direction: column;

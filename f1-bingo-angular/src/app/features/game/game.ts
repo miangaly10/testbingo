@@ -51,12 +51,12 @@ export const F1_CALENDAR_2026: GpEntry[] = [
   { name: 'Abu Dhabi',        flag: '🇦🇪', date: new Date('2026-12-06T13:00:00Z') },
 ];
 
-function getNextRace(): GpEntry {
+export function getNextRace(): GpEntry {
   const now = Date.now();
   return F1_CALENDAR_2026.find(r => r.date.getTime() > now) ?? F1_CALENDAR_2026[F1_CALENDAR_2026.length - 1];
 }
 
-function formatCountdown(target: Date): string {
+export function formatCountdown(target: Date): string {
   const diff = target.getTime() - Date.now();
   if (diff <= 0) return 'EN COURS 🏎️';
   const d = Math.floor(diff / 86_400_000);

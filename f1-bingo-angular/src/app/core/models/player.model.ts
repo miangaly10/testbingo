@@ -17,6 +17,7 @@ export interface Player {
   score?: number;
   lines?: number;
   doneLines?: string[];
+  bonusLines?: string[];  // lignes pour lesquelles le joueur a obtenu le bonus premier
   grid: Cell[];
   history?: RaceResult[];
 }
