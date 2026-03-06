@@ -1175,3 +1175,86 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+// ── Mobile (≤ 640px) ──────────────────────────────────────────────────────────
+@media (max-width: 640px) {
+
+  // Header — wrap sur 2 lignes
+  .lt-header {
+    flex-wrap: wrap;
+    padding: 8px 10px;
+    gap: 6px;
+  }
+
+  .lt-session-name { font-size: 12px; }
+  .lt-circuit      { font-size: 10px; }
+
+  .lt-status-badge {
+    font-size: 10px;
+    padding: 2px 8px;
+  }
+
+  .lt-header-right {
+    width: 100%;
+    justify-content: flex-end;
+    gap: 8px;
+
+    .lt-update { font-size: 10px; color: #444; }
+    .lt-logo   { font-size: 11px; }
+  }
+
+  // RC bar
+  .lt-rc-bar { padding: 5px 10px; font-size: 11px; }
+
+  // Weather
+  .lt-weather {
+    gap: 8px 14px;
+    padding: 4px 10px;
+    font-size: 10px;
+  }
+
+  // Tabs — chaque onglet prend la même largeur
+  .lt-tabs { padding: 0 2px; }
+
+  .lt-tab {
+    flex: 1;
+    padding: 10px 2px 8px;
+    font-size: 9px;
+    letter-spacing: 0;
+    text-align: center;
+  }
+
+  // Leaderboard — réduire min-width, cacher colonne INT
+  .lt-board-header,
+  .lt-row { min-width: 360px; }
+
+  .col-int      { display: none; }
+  .col-driver   { width: 120px; }
+  .col-gap      { width: 58px; }
+  .col-lap      { width: 80px; }
+  .col-tyre     { width: 50px; }
+
+  .lt-team      { display: none; }
+  .lt-lap-time  { font-size: 11px; }
+  .lt-tyre-age  { display: none; }
+
+  // Télémétrie — déjà full-width à 800px, juste compresser
+  .lt-speed-val { font-size: 44px; }
+  .lt-gear-val  { font-size: 36px; }
+
+  // Stratégie pneus
+  .ts-driver-col { width: 70px; padding-right: 6px; }
+  .ts-summary    { width: 68px; padding-left: 6px; }
+  .ts-abbr       { font-size: 11px; }
+  .ts-age        { font-size: 10px; }
+  .ts-pits       { display: none; }
+
+  // Radio
+  .rd-driver { width: 80px; }
+  .rd-team   { display: none; }
+  .rd-num    { width: 20px; font-size: 10px; }
+
+  // Carte — réduire padding
+  .mp-section { padding: 10px; }
+  .mp-svg-container { min-height: 220px; }
+}
