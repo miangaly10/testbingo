@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect width="512" height="512" fill="#15151e"/>
+  <!-- F1 logo — scaled from favicon viewBox 64x40 to fit 512x512 centered -->
+  <!-- Original polygon: points="2,0 58,0 62,40 2,40" scaled x6.8 and centered -->
+  <!-- Scale factor: logo 64x40 → target ~390x244, offset x=61, y=134 -->
+  <g transform="translate(61,134) scale(6.08)">
+    <!-- Red background polygon (F1 logo style angled right edge) -->
+    <polygon points="2,0 58,0 62,40 2,40" fill="#E8002D"/>
+    <!-- F — vertical bar -->
+    <rect x="8" y="5" width="6" height="30" fill="white"/>
+    <!-- F — top horizontal bar -->
+    <rect x="8" y="5" width="17" height="6" fill="white"/>
+    <!-- F — middle horizontal bar -->
+    <rect x="8" y="17" width="14" height="5" fill="white"/>
+    <!-- 1 — angled top-left serif -->
+    <polygon points="31,13 37,5 37,13" fill="white"/>
+    <!-- 1 — vertical stem -->
+    <rect x="37" y="5" width="6" height="30" fill="white"/>
+    <!-- 1 — base -->
+    <rect x="31" y="29" width="12" height="6" fill="white"/>
+  </g>
+</svg>
