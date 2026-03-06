@@ -7,7 +7,7 @@ import { firstValueFrom } from 'rxjs';
 import {
   OpenF1Service,
   OF1Session, OF1Driver, OF1Position, OF1Interval, OF1Lap,
-  OF1CarData, OF1Weather, OF1RaceControl, OF1Stint, OF1TeamRadio,
+  OF1CarData, OF1Weather, OF1RaceControl, OF1Stint, OF1TeamRadio, OF1Location,
 } from '../../core/services/openf1.service';
 
 export interface RadioMessage {
@@ -15,6 +15,13 @@ export interface RadioMessage {
   driver:    OF1Driver | null;
   url:       string;
   playing:   boolean;
+}
+
+export interface MapDot {
+  driver: OF1Driver;
+  x:      number;
+  y:      number;
+  pos:    number;
 }
 
 // ── Derived types for the view ────────────────────────────────────────────────
@@ -106,7 +113,67 @@ export class LiveTrackerComponent implements OnInit, OnDestroy {
   weather        = signal<OF1Weather | null>(null);
   raceControl    = signal<OF1RaceControl[]>([]);
 
-  activeTab      = signal<'leaderboard' | 'strategy' | 'radio'>('leaderboard');
+  activeTab      = signal<'leaderboard' | 'strategy' | 'radio' | 'map'>('leaderboard');
+
+  // ── Map state ────────────────────────────────────────────────────────
+  readonly MAP_W   = 600;
+  readonly MAP_H   = 380;
+  readonly MAP_PAD = 28;
+
+  trackRawPts    = signal<{ x: number; y: number }[]>([]);
+  driverRawLocs  = signal<Map<number, { x: number; y: number }>>(new Map());
+  mapLoading     = signal(false);
+  mapLoadedForSk = signal<number | null>(null);
+
+  // Bounds computed from the track outline
+  private _mapBounds = computed(() => {
+    const pts = this.trackRawPts();
+    if (!pts.length) return null;
+    const xs = pts.map(p => p.x);
+    const ys = pts.map(p => p.y);
+    const minX = Math.min(...xs), maxX = Math.max(...xs);
+    const minY = Math.min(...ys), maxY = Math.max(...ys);
+    const rangeX = maxX - minX || 1;
+    const rangeY = maxY - minY || 1;
+    const scale  = Math.min(
+      (this.MAP_W - 2 * this.MAP_PAD) / rangeX,
+      (this.MAP_H - 2 * this.MAP_PAD) / rangeY,
+    );
+    const offX = this.MAP_PAD + ((this.MAP_W - 2 * this.MAP_PAD) - rangeX * scale) / 2;
+    const offY = this.MAP_PAD + ((this.MAP_H - 2 * this.MAP_PAD) - rangeY * scale) / 2;
+    return { minX, minY, scale, offX, offY };
+  });
+
+  // Normalized SVG polyline string for the circuit outline
+  trackPolyline = computed<string>(() => {
+    const pts = this.trackRawPts();
+    const b   = this._mapBounds();
+    if (!pts.length || !b) return '';
+    return pts
+      .map(p => `${((p.x - b.minX) * b.scale + b.offX).toFixed(1)},${(this.MAP_H - ((p.y - b.minY) * b.scale + b.offY)).toFixed(1)}`)
+      .join(' ');
+  });
+
+  // Normalized driver dots on the SVG
+  mapDots = computed<MapDot[]>(() => {
+    const b = this._mapBounds();
+    if (!b) return [];
+    const drvMap = new Map(this.drivers().map(d => [d.driver_number, d]));
+    const posMap = this.positions();
+    const locs   = this.driverRawLocs();
+    const dots: MapDot[] = [];
+    locs.forEach((loc, num) => {
+      const drv = drvMap.get(num);
+      if (!drv) return;
+      dots.push({
+        driver: drv,
+        x: (loc.x - b.minX) * b.scale + b.offX,
+        y: this.MAP_H - ((loc.y - b.minY) * b.scale + b.offY),
+        pos: posMap.get(num) ?? 99,
+      });
+    });
+    return dots.sort((a, z) => z.pos - a.pos); // render P1 on top
+  });
 
   radioMessages  = signal<RadioMessage[]>([]);
   radioFilter    = signal<number | null>(null); // driver_number or null = all
@@ -243,6 +310,8 @@ export class LiveTrackerComponent implements OnInit, OnDestroy {
 
   drsActive(cd: OF1CarData | null): boolean { return (cd?.drs ?? 0) >= 10; }
 
+  readonly sortByPos = (a: MapDot, b: MapDot) => a.pos - b.pos;
+
   speedPoints = computed<string>(() => {
     const arr = this.carDataHistory();
     if (arr.length < 2) return '';
@@ -292,7 +361,7 @@ export class LiveTrackerComponent implements OnInit, OnDestroy {
       const drivers = await firstValueFrom(this.api.getDrivers(sk));
       this.drivers.set(drivers);
 
-      await Promise.all([
+    await Promise.all([
         this.fetchPositions(sk),
         this.fetchIntervals(sk),
         this.fetchLaps(sk),
@@ -301,6 +370,8 @@ export class LiveTrackerComponent implements OnInit, OnDestroy {
         this.fetchRaceControl(sk),
         this.fetchTeamRadio(sk),
       ]);
+      // Track outline loaded separately (can be heavy)
+      this.fetchTrackOutline(sk);
       this.lastUpdate.set(new Date());
     } catch {
       this.error.set('Impossible de charger les données OpenF1.');
@@ -325,6 +396,10 @@ export class LiveTrackerComponent implements OnInit, OnDestroy {
     if (this._stintPollCounter === 0) {
       await this.fetchStints(sk);
       await this.fetchTeamRadio(sk);
+    }
+    // Map: only fetch live locations when map tab is open
+    if (this.activeTab() === 'map') {
+      await this.fetchLiveLocations(sk);
     }
     // Also refresh telemetry for selected driver
     const d = this.selectedDriver();
@@ -403,6 +478,40 @@ export class LiveTrackerComponent implements OnInit, OnDestroy {
         playing: false,
       }));
     this.radioMessages.set(msgs);
+  }
+
+  /** Fetch one driver's full-session trace to build the circuit outline. */
+  private async fetchTrackOutline(sk: number): Promise<void> {
+    if (this.mapLoadedForSk() === sk) return; // already loaded
+    this.mapLoading.set(true);
+    const drivers = this.drivers();
+    if (!drivers.length) { this.mapLoading.set(false); return; }
+    // Use the race leader (or first driver in list) as reference
+    const posMap   = this.positions();
+    const refNum   = [...posMap.entries()].sort((a, b) => a[1] - b[1])[0]?.[0]
+                     ?? drivers[0].driver_number;
+    const arr = await firstValueFrom(this.api.getLocation(sk, refNum));
+    if (!arr.length) { this.mapLoading.set(false); return; }
+    // Thin to max 1200 evenly-spaced points to keep SVG lean
+    const step    = Math.max(1, Math.floor(arr.length / 1200));
+    const thinned = arr
+      .filter((_, i) => i % step === 0)
+      .map(l => ({ x: l.x, y: l.y }));
+    this.trackRawPts.set(thinned);
+    // Seed driver dots with their current location
+    await this.fetchLiveLocations(sk);
+    this.mapLoadedForSk.set(sk);
+    this.mapLoading.set(false);
+  }
+
+  /** Fetch latest location for all drivers (for live dots). */
+  private async fetchLiveLocations(sk: number): Promise<void> {
+    const arr = await firstValueFrom(this.api.getLocation(sk));
+    if (!arr.length) return;
+    const map = new Map<number, { x: number; y: number }>();
+    // arr is sorted by date asc — iterate forward so last value wins (most recent)
+    arr.forEach(l => map.set(l.driver_number, { x: l.x, y: l.y }));
+    this.driverRawLocs.set(map);
   }
 
   // ── Radio playback ─────────────────────────────────────────────────────────

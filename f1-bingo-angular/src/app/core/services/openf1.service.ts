@@ -125,6 +125,15 @@ export interface OF1TeamRadio {
   recording_url:  string;   // MP3 URL
 }
 
+export interface OF1Location {
+  session_key:   number;
+  driver_number: number;
+  date:          string;
+  x:             number;
+  y:             number;
+  z:             number;
+}
+
 // ── Service ──────────────────────────────────────────────────────────────────
 
 @Injectable({ providedIn: 'root' })
@@ -188,5 +197,15 @@ export class OpenF1Service {
 
   getTeamRadio(sessionKey: number | 'latest' = 'latest'): Observable<OF1TeamRadio[]> {
     return this.get<OF1TeamRadio>('team_radio', { session_key: sessionKey });
+  }
+
+  /**
+   * Location data (x/y/z GPS on track).
+   * driverNumber — restrict to one driver (for circuit outline).
+   */
+  getLocation(sessionKey: number | 'latest', driverNumber?: number): Observable<OF1Location[]> {
+    const p: Record<string, string | number> = { session_key: sessionKey };
+    if (driverNumber) p['driver_number'] = driverNumber;
+    return this.get<OF1Location>('location', p);
   }
 }

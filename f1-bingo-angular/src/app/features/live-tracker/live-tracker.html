@@ -69,6 +69,9 @@
           <span class="lt-tab-badge">{{ radioMessages().length }}</span>
         }
       </button>
+      <button class="lt-tab" [class.lt-tab--active]="activeTab() === 'map'" (click)="activeTab.set('map')">
+        🗺️ Carte
+      </button>
     </div>
 
     <!-- ── Main content ────────────────────────────────────────────────────── -->
@@ -356,6 +359,94 @@
       }
     </section>
     } <!-- /radio tab -->
+
+    <!-- ── Map tab ───────────────────────────────────────────────────────────── -->
+    @if (activeTab() === 'map') {
+    <section class="mp-section">
+
+      @if (mapLoading()) {
+        <div class="mp-loading">
+          <div class="lt-spinner"></div>
+          <p>Chargement de la trace circuit…</p>
+        </div>
+      } @else if (trackPolyline()) {
+
+        <div class="mp-wrap">
+          <!-- SVG map -->
+          <div class="mp-svg-container">
+            <svg class="mp-svg"
+                 [attr.viewBox]="'0 0 ' + MAP_W + ' ' + MAP_H"
+                 preserveAspectRatio="xMidYMid meet">
+
+              <!-- Circuit outline (background — full trace) -->
+              <polyline
+                class="mp-track-bg"
+                [attr.points]="trackPolyline()"
+              />
+              <!-- Circuit outline (foreground) -->
+              <polyline
+                class="mp-track"
+                [attr.points]="trackPolyline()"
+              />
+
+              <!-- Driver dots -->
+              @for (dot of mapDots(); track dot.driver.driver_number) {
+                <g class="mp-dot-group">
+                  <!-- Outer glow for P1 -->
+                  @if (dot.pos === 1) {
+                    <circle
+                      [attr.cx]="dot.x"
+                      [attr.cy]="dot.y"
+                      r="11"
+                      [attr.fill]="'#' + dot.driver.team_colour"
+                      opacity="0.3"
+                      class="mp-p1-pulse"
+                    />
+                  }
+                  <!-- Driver circle -->
+                  <circle
+                    [attr.cx]="dot.x"
+                    [attr.cy]="dot.y"
+                    r="7"
+                    [attr.fill]="'#' + dot.driver.team_colour"
+                    stroke="#0a0a0f"
+                    stroke-width="1.5"
+                  />
+                  <!-- Acronym label -->
+                  <text
+                    [attr.x]="dot.x"
+                    [attr.y]="dot.y + 3"
+                    text-anchor="middle"
+                    class="mp-dot-label"
+                  >{{ dot.driver.name_acronym }}</text>
+                </g>
+              }
+
+            </svg>
+          </div>
+
+          <!-- Driver position list -->
+          <aside class="mp-list">
+            <div class="mp-list-title">Positions</div>
+            @for (dot of mapDots().slice().sort(sortByPos); track dot.driver.driver_number) {
+              <div class="mp-list-row">
+                <span class="mp-list-pos" [class.mp-list-pos--p1]="dot.pos === 1">{{ dot.pos }}</span>
+                <span class="mp-list-dot" [ngStyle]="{'background': '#' + dot.driver.team_colour}"></span>
+                <span class="mp-list-abbr" [ngStyle]="{'color': '#' + dot.driver.team_colour}">{{ dot.driver.name_acronym }}</span>
+                <span class="mp-list-team">{{ dot.driver.team_name }}</span>
+              </div>
+            }
+          </aside>
+        </div>
+
+      } @else {
+        <div class="lt-empty">
+          Aucune donnée de position disponible.<br>
+          Les données GPS sont uniquement disponibles pendant les sessions actives.
+        </div>
+      }
+    </section>
+    } <!-- /map tab -->
 
   }
 </div>

@@ -1007,3 +1007,171 @@
   margin-left: auto;
   flex-shrink: 0;
 }
+
+// ── Map section ───────────────────────────────────────────────────────────────
+.mp-section {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+}
+
+.mp-loading {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  color: #666;
+  font-size: 13px;
+}
+
+.mp-wrap {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  flex: 1;
+
+  @media (max-width: 700px) {
+    flex-direction: column;
+  }
+}
+
+// SVG container
+.mp-svg-container {
+  flex: 1;
+  background: #0a0a14;
+  border: 1px solid #1a1a28;
+  border-radius: 8px;
+  overflow: hidden;
+  min-height: 280px;
+}
+
+.mp-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+// Track polyline - background shadow layer
+.mp-track-bg {
+  fill: none;
+  stroke: rgba(255,255,255,.06);
+  stroke-width: 14;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+// Track polyline - main line
+.mp-track {
+  fill: none;
+  stroke: #2a2a3e;
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+// P1 pulse ring
+.mp-p1-pulse {
+  animation: mp-pulse 1.2s ease-out infinite;
+}
+
+@keyframes mp-pulse {
+  0%   { r: 8;  opacity: .5; }
+  100% { r: 16; opacity: 0; }
+}
+
+// Driver dot label
+.mp-dot-label {
+  font-size: 6px;
+  font-weight: 900;
+  fill: #fff;
+  letter-spacing: 0;
+  pointer-events: none;
+  paint-order: stroke;
+  stroke: rgba(0,0,0,.7);
+  stroke-width: 2px;
+}
+
+// Driver dot group hover
+.mp-dot-group {
+  cursor: default;
+  transition: opacity .15s;
+  &:hover { opacity: .8; }
+}
+
+// Side list
+.mp-list {
+  width: 160px;
+  flex-shrink: 0;
+  background: #0d0d14;
+  border: 1px solid #1a1a28;
+  border-radius: 8px;
+  overflow: hidden;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+
+  @media (max-width: 700px) {
+    width: 100%;
+    align-self: auto;
+  }
+}
+
+.mp-list-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: #555;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 9px 12px 6px;
+  border-bottom: 1px solid #1a1a28;
+}
+
+.mp-list-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-bottom: 1px solid #0f0f18;
+
+  &:last-child { border-bottom: none; }
+  &:hover { background: #111; }
+}
+
+.mp-list-pos {
+  font-size: 11px;
+  font-weight: 700;
+  color: #666;
+  width: 18px;
+  text-align: center;
+  flex-shrink: 0;
+
+  &--p1 { color: #FFD700; }
+}
+
+.mp-list-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 1px solid rgba(255,255,255,.15);
+}
+
+.mp-list-abbr {
+  font-size: 12px;
+  font-weight: 800;
+  width: 32px;
+  flex-shrink: 0;
+  letter-spacing: 0.3px;
+}
+
+.mp-list-team {
+  font-size: 9px;
+  color: #555;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
