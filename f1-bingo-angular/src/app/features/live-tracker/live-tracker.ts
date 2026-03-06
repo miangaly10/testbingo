@@ -380,6 +380,13 @@ export class LiveTrackerComponent implements OnInit, OnDestroy {
 
   // ── Periodic poll ─────────────────────────────────────────────────────────
   private async pollLive(): Promise<void> {
+    // If the initial load didn't get a session (API failure, empty response…),
+    // retry the full load instead of silently doing nothing forever.
+    if (!this.session()) {
+      await this.loadAll();
+      this.loading.set(false);
+      return;
+    }
     const sess = this.session();
     if (!sess) return;
     const sk = sess.session_key;
