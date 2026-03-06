@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, of, catchError } from 'rxjs';
+import { Observable, of, catchError, retry, timer, firstValueFrom } from 'rxjs';
 
 const BASE = 'https://api.openf1.org/v1';
 
@@ -136,66 +136,100 @@ export interface OF1Location {
 
 // ── Service ──────────────────────────────────────────────────────────────────
 
+const MIN_DELAY_MS = 600; // max ~1.6 req/s — well under OpenF1 rate limit
+
 @Injectable({ providedIn: 'root' })
 export class OpenF1Service {
   private http = inject(HttpClient);
 
-  // Generic safe fetch – returns empty array on error
-  private get<T>(endpoint: string, params: Record<string, string | number> = {}): Observable<T[]> {
+  // ── Request queue ──────────────────────────────────────────────────────────
+  // All requests are serialized through this promise chain so we never fire
+  // multiple HTTP calls simultaneously, preventing 429 bursts.
+  private _queue: Promise<unknown> = Promise.resolve();
+
+  private enqueue<T>(work: () => Observable<T[]>): Promise<T[]> {
+    const next = this._queue.then(
+      () => new Promise<T[]>(resolve => {
+        // Minimum gap between requests
+        setTimeout(() => {
+          firstValueFrom(
+            work().pipe(
+              retry({
+                count: 1, // single retry on 429 / 5xx
+                delay: (err) => {
+                  const status = err?.status ?? 0;
+                  if (status === 429 || status >= 500) return timer(3_000);
+                  throw err;
+                },
+              }),
+              catchError(() => of([] as T[])),
+            )
+          ).then(resolve);
+        }, MIN_DELAY_MS);
+      }),
+    );
+    // Swallow errors at the queue level so one failure doesn't break the chain
+    this._queue = next.catch(() => {});
+    return next;
+  }
+
+  // Generic safe fetch — queued & rate-limited
+  private get<T>(endpoint: string, params: Record<string, string | number> = {}): Promise<T[]> {
     let httpParams = new HttpParams();
     for (const [k, v] of Object.entries(params)) {
       httpParams = httpParams.set(k, String(v));
     }
-    return this.http.get<T[]>(`${BASE}/${endpoint}`, { params: httpParams })
-      .pipe(catchError(() => of([])));
+    return this.enqueue<T>(() =>
+      this.http.get<T[]>(`${BASE}/${endpoint}`, { params: httpParams })
+    );
   }
 
   /** Race sessions for a given year. Defaults to current year. */
-  getRaceSessions(year: number = new Date().getFullYear()): Observable<OF1Session[]> {
+  getRaceSessions(year: number = new Date().getFullYear()): Promise<OF1Session[]> {
     return this.get<OF1Session>('sessions', { session_type: 'Race', year });
   }
 
-  getDrivers(sessionKey: number | 'latest' = 'latest'): Observable<OF1Driver[]> {
+  getDrivers(sessionKey: number | 'latest' = 'latest'): Promise<OF1Driver[]> {
     return this.get<OF1Driver>('drivers', { session_key: sessionKey });
   }
 
   /** Latest position for every driver */
-  getPositions(sessionKey: number | 'latest' = 'latest'): Observable<OF1Position[]> {
+  getPositions(sessionKey: number | 'latest' = 'latest'): Promise<OF1Position[]> {
     return this.get<OF1Position>('position', { session_key: sessionKey });
   }
 
   /** Latest intervals for every driver */
-  getIntervals(sessionKey: number | 'latest' = 'latest'): Observable<OF1Interval[]> {
+  getIntervals(sessionKey: number | 'latest' = 'latest'): Promise<OF1Interval[]> {
     return this.get<OF1Interval>('intervals', { session_key: sessionKey });
   }
 
   /** All laps (large payload – filter by driver if possible) */
-  getLaps(sessionKey: number | 'latest' = 'latest', driverNumber?: number): Observable<OF1Lap[]> {
+  getLaps(sessionKey: number | 'latest' = 'latest', driverNumber?: number): Promise<OF1Lap[]> {
     const p: Record<string, string | number> = { session_key: sessionKey };
     if (driverNumber) p['driver_number'] = driverNumber;
     return this.get<OF1Lap>('laps', p);
   }
 
   /** Latest car telemetry — returns last ~100 rows per driver */
-  getCarData(sessionKey: number | 'latest' = 'latest', driverNumber?: number): Observable<OF1CarData[]> {
+  getCarData(sessionKey: number | 'latest' = 'latest', driverNumber?: number): Promise<OF1CarData[]> {
     const p: Record<string, string | number> = { session_key: sessionKey, speed: 0 };
     if (driverNumber) p['driver_number'] = driverNumber;
     return this.get<OF1CarData>('car_data', p);
   }
 
-  getWeather(sessionKey: number | 'latest' = 'latest'): Observable<OF1Weather[]> {
+  getWeather(sessionKey: number | 'latest' = 'latest'): Promise<OF1Weather[]> {
     return this.get<OF1Weather>('weather', { session_key: sessionKey });
   }
 
-  getRaceControl(sessionKey: number | 'latest' = 'latest'): Observable<OF1RaceControl[]> {
+  getRaceControl(sessionKey: number | 'latest' = 'latest'): Promise<OF1RaceControl[]> {
     return this.get<OF1RaceControl>('race_control', { session_key: sessionKey });
   }
 
-  getStints(sessionKey: number | 'latest' = 'latest'): Observable<OF1Stint[]> {
+  getStints(sessionKey: number | 'latest' = 'latest'): Promise<OF1Stint[]> {
     return this.get<OF1Stint>('stints', { session_key: sessionKey });
   }
 
-  getTeamRadio(sessionKey: number | 'latest' = 'latest'): Observable<OF1TeamRadio[]> {
+  getTeamRadio(sessionKey: number | 'latest' = 'latest'): Promise<OF1TeamRadio[]> {
     return this.get<OF1TeamRadio>('team_radio', { session_key: sessionKey });
   }
 
@@ -203,7 +237,7 @@ export class OpenF1Service {
    * Location data (x/y/z GPS on track).
    * driverNumber — restrict to one driver (for circuit outline).
    */
-  getLocation(sessionKey: number | 'latest', driverNumber?: number): Observable<OF1Location[]> {
+  getLocation(sessionKey: number | 'latest', driverNumber?: number): Promise<OF1Location[]> {
     const p: Record<string, string | number> = { session_key: sessionKey };
     if (driverNumber) p['driver_number'] = driverNumber;
     return this.get<OF1Location>('location', p);

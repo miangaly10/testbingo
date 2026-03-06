@@ -3,7 +3,6 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { DecimalPipe, DatePipe, NgStyle } from '@angular/common';
-import { firstValueFrom } from 'rxjs';
 import {
   OpenF1Service,
   OF1Session, OF1Driver, OF1Position, OF1Interval, OF1Lap,
@@ -337,8 +336,8 @@ export class LiveTrackerComponent implements OnInit, OnDestroy {
   async ngOnInit(): Promise<void> {
     await this.loadAll();
     this.loading.set(false);
-    // Poll every 1 s
-    this._pollId = setInterval(() => this.pollLive(), 1_000);
+    // Poll every 5 s — OpenF1 data refreshes every ~3-4 s, no need to hammer it
+    this._pollId = setInterval(() => this.pollLive(), 5_000);
   }
 
   ngOnDestroy(): void {
@@ -350,7 +349,7 @@ export class LiveTrackerComponent implements OnInit, OnDestroy {
   private async loadAll(): Promise<void> {
     try {
       // Fetch all 2026 Race sessions
-      const sessions = await firstValueFrom(this.api.getRaceSessions(2026));
+      const sessions = await this.api.getRaceSessions(2026);
       const sess = this.pickBestSession(sessions);
       this.session.set(sess);
 
@@ -358,7 +357,7 @@ export class LiveTrackerComponent implements OnInit, OnDestroy {
       const sk = sess.session_key;
 
       // Drivers
-      const drivers = await firstValueFrom(this.api.getDrivers(sk));
+      const drivers = await this.api.getDrivers(sk);
       this.drivers.set(drivers);
 
     await Promise.all([
@@ -379,45 +378,74 @@ export class LiveTrackerComponent implements OnInit, OnDestroy {
   }
 
   // ── Periodic poll ─────────────────────────────────────────────────────────
+  //
+  // Staggered refresh rates (tick = 5 s) to stay well under OpenF1 rate limits:
+  //   Every tick  (  5 s): positions, intervals, race_control
+  //   Every 2nd   ( 10 s): laps, car_data (if driver selected), map locations
+  //   Every 6th   ( 30 s): weather, team_radio
+  //   Every 12th  ( 60 s): stints
+  //
   private async pollLive(): Promise<void> {
-    // If the initial load didn't get a session (API failure, empty response…),
-    // retry the full load instead of silently doing nothing forever.
-    if (!this.session()) {
-      await this.loadAll();
-      this.loading.set(false);
-      return;
+    // Skip if a previous poll is still in flight
+    if (this._isPolling) return;
+    this._isPolling = true;
+
+    try {
+      // If the initial load failed (API timeout, empty response…), retry it
+      // with back-off: attempts 1–4 → every tick, then 1 out of N ticks
+      if (!this.session()) {
+        this._sessionRetries++;
+        const backoffEvery = Math.min(this._sessionRetries, 12); // cap at 60 s
+        if (this._sessionRetries % backoffEvery === 0) {
+          await this.loadAll();
+          this.loading.set(false);
+        }
+        return;
+      }
+      this._sessionRetries = 0;
+
+      const sess = this.session()!;
+      const sk   = sess.session_key;
+      const tick = ++this._stintPollCounter;
+
+      // ── Every tick: high-priority live data (3 requests)
+      await Promise.all([
+        this.fetchPositions(sk),
+        this.fetchIntervals(sk),
+        this.fetchRaceControl(sk),
+      ]);
+      this.lastUpdate.set(new Date());
+
+      // ── Every 2nd tick: lap times + map + telemetry
+      if (tick % 2 === 0) {
+        const promises: Promise<void>[] = [this.fetchLaps(sk)];
+        if (this.activeTab() === 'map') promises.push(this.fetchLiveLocations(sk));
+        const d = this.selectedDriver();
+        if (d) promises.push(this.fetchCarData(sk, d.driver_number));
+        await Promise.all(promises);
+      }
+
+      // ── Every 6th tick: weather + radio
+      if (tick % 6 === 0) {
+        await Promise.all([this.fetchWeather(sk), this.fetchTeamRadio(sk)]);
+      }
+
+      // ── Every 12th tick: stints (pit strategy rarely changes)
+      if (tick % 12 === 0) {
+        await this.fetchStints(sk);
+      }
+    } finally {
+      this._isPolling = false;
     }
-    const sess = this.session();
-    if (!sess) return;
-    const sk = sess.session_key;
-    await Promise.all([
-      this.fetchPositions(sk),
-      this.fetchIntervals(sk),
-      this.fetchLaps(sk),
-      this.fetchWeather(sk),
-      this.fetchRaceControl(sk),
-    ]);
-    this.lastUpdate.set(new Date());
-    // Refresh stints + radio every 10 polls (~10 s)
-    this._stintPollCounter = (this._stintPollCounter + 1) % 10;
-    if (this._stintPollCounter === 0) {
-      await this.fetchStints(sk);
-      await this.fetchTeamRadio(sk);
-    }
-    // Map: only fetch live locations when map tab is open
-    if (this.activeTab() === 'map') {
-      await this.fetchLiveLocations(sk);
-    }
-    // Also refresh telemetry for selected driver
-    const d = this.selectedDriver();
-    if (d) await this.fetchCarData(sk, d.driver_number);
   }
 
-  private _stintPollCounter = 0;
+  private _stintPollCounter  = 0;
+  private _isPolling         = false;
+  private _sessionRetries    = 0;
 
   // ── Data fetchers ──────────────────────────────────────────────────────────
   private async fetchPositions(sk: number): Promise<void> {
-    const arr = await firstValueFrom(this.api.getPositions(sk));
+    const arr = await this.api.getPositions(sk);
     // Keep only latest position per driver
     const map = new Map<number, number>();
     arr.forEach(p => map.set(p.driver_number, p.position));
@@ -425,14 +453,14 @@ export class LiveTrackerComponent implements OnInit, OnDestroy {
   }
 
   private async fetchIntervals(sk: number): Promise<void> {
-    const arr = await firstValueFrom(this.api.getIntervals(sk));
+    const arr = await this.api.getIntervals(sk);
     const map = new Map<number, OF1Interval>();
     arr.forEach(iv => map.set(iv.driver_number, iv));
     this.intervals.set(map);
   }
 
   private async fetchLaps(sk: number): Promise<void> {
-    const arr = await firstValueFrom(this.api.getLaps(sk));
+    const arr = await this.api.getLaps(sk);
     const map = new Map<number, OF1Lap>();
     arr.forEach(l => {
       const cur = map.get(l.driver_number);
@@ -442,7 +470,7 @@ export class LiveTrackerComponent implements OnInit, OnDestroy {
   }
 
   private async fetchStints(sk: number): Promise<void> {
-    const arr = await firstValueFrom(this.api.getStints(sk));
+    const arr = await this.api.getStints(sk);
     const map = new Map<number, OF1Stint[]>();
     arr.forEach(s => {
       const list = map.get(s.driver_number) ?? [];
@@ -455,23 +483,23 @@ export class LiveTrackerComponent implements OnInit, OnDestroy {
   }
 
   private async fetchWeather(sk: number): Promise<void> {
-    const arr = await firstValueFrom(this.api.getWeather(sk));
+    const arr = await this.api.getWeather(sk);
     this.weather.set(arr[arr.length - 1] ?? null);
   }
 
   private async fetchRaceControl(sk: number): Promise<void> {
-    const arr = await firstValueFrom(this.api.getRaceControl(sk));
+    const arr = await this.api.getRaceControl(sk);
     this.raceControl.set(arr);
   }
 
   private async fetchCarData(sk: number, driverNumber: number): Promise<void> {
-    const arr = await firstValueFrom(this.api.getCarData(sk, driverNumber));
+    const arr = await this.api.getCarData(sk, driverNumber);
     // Keep last 200 data points for the chart
     this.carDataHistory.set(arr.slice(-200));
   }
 
   private async fetchTeamRadio(sk: number): Promise<void> {
-    const arr  = await firstValueFrom(this.api.getTeamRadio(sk));
+    const arr  = await this.api.getTeamRadio(sk);
     const drvs = this.drivers();
     const drvMap = new Map(drvs.map(d => [d.driver_number, d]));
     // Newest first, keep max 200
@@ -497,7 +525,7 @@ export class LiveTrackerComponent implements OnInit, OnDestroy {
     const posMap   = this.positions();
     const refNum   = [...posMap.entries()].sort((a, b) => a[1] - b[1])[0]?.[0]
                      ?? drivers[0].driver_number;
-    const arr = await firstValueFrom(this.api.getLocation(sk, refNum));
+    const arr = await this.api.getLocation(sk, refNum);
     if (!arr.length) { this.mapLoading.set(false); return; }
     // Thin to max 1200 evenly-spaced points to keep SVG lean
     const step    = Math.max(1, Math.floor(arr.length / 1200));
@@ -513,11 +541,11 @@ export class LiveTrackerComponent implements OnInit, OnDestroy {
 
   /** Fetch latest location for all drivers (for live dots). */
   private async fetchLiveLocations(sk: number): Promise<void> {
-    const arr = await firstValueFrom(this.api.getLocation(sk));
+    const arr = await this.api.getLocation(sk);
     if (!arr.length) return;
     const map = new Map<number, { x: number; y: number }>();
     // arr is sorted by date asc — iterate forward so last value wins (most recent)
-    arr.forEach(l => map.set(l.driver_number, { x: l.x, y: l.y }));
+    arr.forEach((l: OF1Location) => map.set(l.driver_number, { x: l.x, y: l.y }));
     this.driverRawLocs.set(map);
   }
 
