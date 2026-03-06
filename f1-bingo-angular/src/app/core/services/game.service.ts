@@ -17,11 +17,14 @@ export class GameService {
   private _editMode = signal(false);
   private _showWin = signal(false);
   private _winMessage = signal('');
+  private _streak = signal(0);
+  private _streakTimer: ReturnType<typeof setTimeout> | null = null;
 
-  readonly cells = this._cells.asReadonly();
-  readonly editMode = this._editMode.asReadonly();
-  readonly showWin = this._showWin.asReadonly();
-  readonly winMessage = this._winMessage.asReadonly();
+  readonly cells       = this._cells.asReadonly();
+  readonly editMode    = this._editMode.asReadonly();
+  readonly showWin     = this._showWin.asReadonly();
+  readonly winMessage  = this._winMessage.asReadonly();
+  readonly streak      = this._streak.asReadonly();
 
   readonly lineStatuses = computed<LineStatus[]>(() => {
     const playerId = this._auth.currentPlayerId();
@@ -85,9 +88,16 @@ export class GameService {
     if (ch.has(idx)) {
       ch.delete(idx);
       score = Math.max(0, score - pts);
+      // reset streak on uncheck
+      this._streak.set(0);
+      if (this._streakTimer) { clearTimeout(this._streakTimer); this._streakTimer = null; }
     } else {
       ch.add(idx);
       score += pts;
+      // increment streak, auto-reset after 7 s of inactivity
+      this._streak.update(s => s + 1);
+      if (this._streakTimer) clearTimeout(this._streakTimer);
+      this._streakTimer = setTimeout(() => this._streak.set(0), 7000);
     }
 
     await this._data.updatePlayer({ ...p, checked: [...ch], score });
@@ -135,6 +145,21 @@ export class GameService {
 
     this._doneLines.set(prevDone);
     await this._data.updatePlayer({ ...p, lines: prevDone.size, doneLines: [...prevDone] });
+
+    // Full House: all 25 checked
+    const fullHouse = ch.size === 25 && !prevDone.has('full');
+    if (fullHouse) {
+      prevDone.add('full');
+      this._doneLines.set(prevDone);
+      const bingoLineCount = [...prevDone].filter(id => id !== 'full').length;
+      await this._data.updatePlayer({ ...p, lines: bingoLineCount, doneLines: [...prevDone] });
+      this._winMessage.set(`🏆 FULL HOUSE ! ${p.name} a coché toutes les 25 cases ! 🏆`);
+      this._showWin.set(true);
+      return true;
+    }
+    // Remove 'full' if unchecked
+    if (ch.size < 25) prevDone.delete('full');
+    this._doneLines.set(prevDone);
 
     if (animate && newLine) {
       this._winMessage.set(`🏁 ${p.name} a une ligne ! 🏁`);

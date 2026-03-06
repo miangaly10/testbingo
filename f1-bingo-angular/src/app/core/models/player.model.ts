@@ -1,5 +1,12 @@
 import { Cell } from './cell.model';
 
+export interface RaceResult {
+  gp: string;
+  score: number;
+  lines: number;
+  date: string;
+}
+
 export interface Player {
   id: string;
   name: string;
@@ -10,4 +17,5 @@ export interface Player {
   lines?: number;
   doneLines?: string[];
   grid: Cell[];
+  history?: RaceResult[];
 }

@@ -22,6 +22,9 @@ export class PlayerBarComponent {
   switchPlayer = output<void>();
   deletePlayer = output<void>();
   editName     = output<void>();
+  changePin    = output<void>();
+  editAvatar   = output<void>();
+  browseOthers = output<void>();
 
   checkedCount = computed(() => this.player().checked?.length ?? 0);
 

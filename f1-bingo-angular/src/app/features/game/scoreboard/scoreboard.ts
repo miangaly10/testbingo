@@ -1,4 +1,4 @@
-import { Component, input, output, computed, inject } from '@angular/core';
+import { Component, input, output, computed, inject, effect, OnDestroy } from '@angular/core';
 import { DataService } from '../../../core/services/data.service';
 import { AvatarComponent } from '../../../shared/components/avatar/avatar.component';
 
@@ -36,13 +36,29 @@ import { AvatarComponent } from '../../../shared/components/avatar/avatar.compon
     }
   `
 })
-export class ScoreboardComponent {
-  private _data = inject(DataService);
+export class ScoreboardComponent implements OnDestroy {
+  private _data   = inject(DataService);
+  private _pollId: ReturnType<typeof setInterval> | null = null;
 
   visible = input(false);
   close   = output<void>();
 
   players = computed(() => this._data.getPlayersSorted());
+
+  constructor() {
+    effect(() => {
+      if (this.visible()) {
+        // Rafraîchir toutes les 15 s quand le classement est ouvert
+        this._pollId = setInterval(() => this._data.load(), 15_000);
+      } else {
+        if (this._pollId) { clearInterval(this._pollId); this._pollId = null; }
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this._pollId) clearInterval(this._pollId);
+  }
 
   rankClass(i: number): string {
     return i === 0 ? 'sb-rank gold' : i === 1 ? 'sb-rank silver' : i === 2 ? 'sb-rank bronze' : 'sb-rank';

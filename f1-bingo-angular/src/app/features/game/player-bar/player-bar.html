@@ -1,7 +1,8 @@
 <div class="cp-bar">
   <div class="cp-left">
-    <div class="cp-av">
+    <div class="cp-av" (click)="isOwner() && editAvatar.emit()" [style.cursor]="isOwner() ? 'pointer' : 'default'" [title]="isOwner() ? 'Changer l\u2019avatar' : ''">
       <app-avatar [emoji]="player().emoji" [size]="36" />
+      @if (isOwner()) { <span class="av-edit-hint">✏️</span> }
     </div>
     <div>
       <div class="cp-lbl">Joueur actif</div>
@@ -13,12 +14,16 @@
       </div>
     </div>
   </div>
-  <button class="cp-sw" (click)="switchPlayer.emit()">⇄ Changer</button>
-  @if (isOwner()) {
-    <button class="btn bd" (click)="deletePlayer.emit()">🗑️ Supprimer</button>
-  } @else {
-    <span class="view-badge">👁️ Lecture seule</span>
-  }
+  <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+    <button class="cp-sw" (click)="browseOthers.emit()">👥 Voir</button>
+    <button class="cp-sw" (click)="switchPlayer.emit()">⇄ Changer</button>
+    @if (isOwner()) {
+      <button class="btn bs" style="padding:5px 10px;font-size:11px" (click)="changePin.emit()" title="Changer le PIN">🔒 PIN</button>
+      <button class="btn bd" (click)="deletePlayer.emit()">🗑️ Supprimer</button>
+    } @else {
+      <span class="view-badge">👁️ Lecture seule</span>
+    }
+  </div>
 </div>
 
 <!-- Stats -->

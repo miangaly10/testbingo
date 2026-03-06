@@ -1,46 +1,132 @@
 @if (currentPlayer()) {
-  <!-- Scoreboard button -->
-  <button class="sb-btn" (click)="showScoreboard.set(true)">🏆 Classement</button>
+  <!-- Top-right buttons -->
+  <div class="sb-bar">
+    <button class="sb-btn" (click)="showScoreboard.set(true)">🏆 Classement</button>
+    <button class="sb-btn" (click)="showHistory.set(true)">📋 Historique</button>
+    <button class="sb-btn sb-btn--icon" (click)="toggleSound()" [title]="soundEnabled() ? 'Couper le son' : 'Activer le son'">
+      {{ soundEnabled() ? '🔊' : '🔇' }}
+    </button>
+  </div>
 
-  <div class="wrapper" id="mainApp">
-    <!-- Header -->
+  <!-- Spectator banner -->
+  @if (isSpectating() && spectatedPlayer()) {
+    <div class="spectator-banner">
+      <app-avatar [emoji]="spectatedPlayer()!.emoji" [size]="32" />
+      <div class="spec-info">
+        <span class="spec-name">{{ spectatedPlayer()!.name }}</span>
+        <span class="spec-stats">{{ spectatedPlayer()!.checked?.length ?? 0 }}/25 · {{ spectatedPlayer()!.lines ?? 0 }} lignes · {{ spectatedPlayer()!.score ?? 0 }} pts</span>
+      </div>
+      <span class="spec-label">👁️ Spectateur</span>
+      <button class="btn bp spec-back" (click)="exitSpectate()">← Ma grille</button>
+    </div>
+  }
+
+  <!-- Player browser panel -->
+  @if (showPlayerBrowse()) {
+    <div class="player-browse-overlay" (click)="showPlayerBrowse.set(false)">
+      <div class="player-browse-card" (click)="$event.stopPropagation()">
+        <div class="pb-header">👥 Voir la grille d'un autre joueur</div>
+        @if (otherPlayers().length === 0) {
+          <div class="pb-empty">Aucun autre joueur</div>
+        }
+        @for (p of otherPlayers(); track p.id) {
+          <div class="pb-item" [class.active]="spectatorId() === p.id" (click)="spectate(p.id)">
+            <app-avatar [emoji]="p.emoji" [size]="32" />
+            <div class="pb-info">
+              <div class="pb-name">{{ p.name }}</div>
+              <div class="pb-stats">{{ p.checked?.length ?? 0 }}/25 · {{ p.lines ?? 0 }} lignes · {{ p.score ?? 0 }} pts</div>
+            </div>
+            @if (spectatorId() === p.id) { <span>✅</span> }
+          </div>
+        }
+        <div style="text-align:center;margin-top:12px">
+          <button class="btn bs" (click)="showPlayerBrowse.set(false)">Fermer</button>
+          @if (isSpectating()) {
+            <button class="btn bp" style="margin-left:8px" (click)="exitSpectate();showPlayerBrowse.set(false)">← Ma grille</button>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- History panel -->
+  @if (showHistory()) {
+    <div class="player-browse-overlay" (click)="showHistory.set(false)">
+      <div class="player-browse-card hist-card" (click)="$event.stopPropagation()">
+        <div class="pb-header">📋 Historique des courses</div>
+        @let hist = currentPlayer()!.history;
+        @if (!hist || hist.length === 0) {
+          <div class="pb-empty">Aucune course enregistrée.<br>Utilisez "🏁 Terminer la course" pour archiver une session.</div>
+        }
+        @for (r of (hist ?? []).slice().reverse(); track r.date) {
+          <div class="hist-row">
+            <div class="hist-gp">🏁 {{ r.gp }}</div>
+            <div class="hist-date">{{ r.date | slice:0:10 }}</div>
+            <div class="hist-score">{{ r.score }} pts</div>
+            <div class="hist-lines">{{ r.lines }} lignes</div>
+          </div>
+        }
+        <div style="text-align:center;margin-top:14px">
+          <button class="btn bs" (click)="showHistory.set(false)">Fermer</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <div class="wrapper" id="mainApp" [style.--team-accent]="accentColor()">
+    <!-- Header with GP countdown -->
     <div class="header">
       <div class="hbadge">Saison 2026</div>
       <h1>F1 BINGO</h1>
       <div class="subtitle">Predictions · Chaos · Glory</div>
+      <div class="gp-countdown">
+        <span class="gp-label">🏁 {{ nextGpFlag() }} {{ nextGpName() }}</span>
+        <span class="gp-timer">{{ countdown() }}</span>
+      </div>
     </div>
 
-    <!-- Player bar + stats + lines -->
-    <app-player-bar
-      [player]="currentPlayer()!"
-      [isOwner]="isOwner()"
-      [lineStatuses]="lineStats()"
-      (switchPlayer)="switchPlayer()"
-      (deletePlayer)="deleteCurrentPlayer()"
-      (editName)="editPlayerName()"
-    />
+    <!-- Player bar (own player) -->
+    @if (!isSpectating()) {
+      <app-player-bar
+        [player]="currentPlayer()!"
+        [isOwner]="isOwner()"
+        [lineStatuses]="lineStats()"
+        (switchPlayer)="switchPlayer()"
+        (deletePlayer)="deleteCurrentPlayer()"
+        (editName)="editPlayerName()"
+        (changePin)="changePin()"
+        (editAvatar)="showAvatarPicker.set(true)"
+        (browseOthers)="showPlayerBrowse.set(true)"
+      />
+    }
+
+    <!-- Streak indicator -->
+    @if (game.streak() >= 2 && !isSpectating()) {
+      <div class="streak-badge">🔥 {{ game.streak() }} en série !</div>
+    }
 
     <!-- Bingo grid -->
     <app-bingo-grid
-      [cells]="cells()"
-      [checked]="checkedSet()"
-      [blines]="isBlines()"
-      [editMode]="editMode()"
+      [cells]="displayCells()"
+      [checked]="displayChecked()"
+      [blines]="displayBlines()"
+      [editMode]="isSpectating() ? false : editMode()"
       (cellClicked)="onCellClick($event)"
       (cellsSwapped)="onCellsSwapped($event)"
     />
 
-    @if (editMode()) {
+    @if (editMode() && !isSpectating()) {
       <div class="drag-hint show">🔀 Glissez les cases pour les réorganiser — sauvegarde auto</div>
     }
 
     <!-- Controls -->
-    @if (isOwner()) {
+    @if (isOwner() && !isSpectating()) {
       <div class="controls">
         <button class="btn bg" (click)="toggleEditMode()">
           ✏️ {{ editMode() ? 'Terminer édition' : 'Modifier la grille' }}
         </button>
         <button class="btn bs" (click)="resetGrid()">↺ Réinitialiser ma grille</button>
+        <button class="btn bp" (click)="finishRace()">🏁 Terminer la course</button>
       </div>
     }
   </div>
@@ -62,5 +148,11 @@
     [visible]="showWin()"
     [message]="winMessage()"
     (closed)="closeWin()"
+  />
+
+  <app-avatar-picker-modal
+    [visible]="showAvatarPicker()"
+    (picked)="editAvatar($event)"
+    (cancel)="showAvatarPicker.set(false)"
   />
 }
