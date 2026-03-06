@@ -44,4 +44,4 @@ export const BINGO_LINES: BingoLine[] = [
   { id: 'd1', els: [4,8,12,16,20] },
 ];
 
-export const SCORE_MAP: Record<string, number> = { ph: 10, pm: 15, pl: 25 };
+export const SCORE_MAP: Record<string, number> = { ph: 10, pm: 10, pl: 10 };
