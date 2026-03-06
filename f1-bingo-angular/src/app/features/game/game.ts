@@ -22,9 +22,9 @@ import { AvatarPickerModalComponent } from './avatar-picker-modal/avatar-picker-
 import { AvatarComponent } from '../../shared/components/avatar/avatar.component';
 
 // ── 2026 F1 Calendar ─────────────────────────────────────────────────────────
-interface GpEntry { name: string; flag: string; date: Date; sprint?: boolean; }
+export interface GpEntry { name: string; flag: string; date: Date; sprint?: boolean; }
 
-const F1_CALENDAR_2026: GpEntry[] = [
+export const F1_CALENDAR_2026: GpEntry[] = [
   { name: 'Australie',        flag: '🇦🇺', date: new Date('2026-03-08T04:00:00Z') },
   { name: 'Chine',            flag: '🇨🇳', date: new Date('2026-03-15T08:00:00Z'), sprint: true },
   { name: 'Japon',            flag: '🇯🇵', date: new Date('2026-03-29T06:00:00Z') },

@@ -13,6 +13,7 @@ export interface Player {
   emoji: string;
   pin: string;
   checked?: number[];
+  checkedGp?: Record<number, number>; // cellIdx → index GP (0-23) au moment du coche
   score?: number;
   lines?: number;
   doneLines?: string[];

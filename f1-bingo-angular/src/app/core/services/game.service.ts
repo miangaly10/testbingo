@@ -2,11 +2,23 @@ import { Injectable, signal, computed } from '@angular/core';
 import { Cell } from '../models/cell.model';
 import { BingoLine } from '../models/f1.model';
 import { DEFAULT_CELLS, BINGO_LINES, SCORE_MAP } from '../data/cells.data';
+import { F1_CALENDAR_2026 } from '../../features/game/game';
 import { DataService } from './data.service';
 import { AuthService } from './auth.service';
 
 // La grille se verrouille au début du GP d'Australie
 const SEASON_LOCK_DATE = new Date('2026-03-08T04:00:00Z');
+
+/** Retourne l'index du GP en cours (dernier GP dont la date est passée), ou -1 avant la saison. */
+function getCurrentGpIndex(): number {
+  const now = Date.now();
+  let last = -1;
+  for (let i = 0; i < F1_CALENDAR_2026.length; i++) {
+    if (F1_CALENDAR_2026[i].date.getTime() <= now) last = i;
+    else break;
+  }
+  return last;
+}
 
 export interface LineStatus {
   id: string;
@@ -92,34 +104,41 @@ export class GameService {
     const prob = this._cells()[idx]?.prob || 'pm';
     const pts = SCORE_MAP[prob] ?? 0;
     const cell = this._cells()[idx];
+    const currentGpIdx = getCurrentGpIndex();
+    const checkedGp = { ...(p.checkedGp ?? {}) };
 
-    // First-finder: is this cell already checked by at least one OTHER player?
-    const otherHasIt = Object.values(this._data.players())
-      .some(other => other.id !== id && (other.checked ?? []).includes(idx));
+    // Bonus GP : quelqu'un a-t-il trouvé cette cellule lors d'un GP PRéCÉDENT ?
+    // Si non, tous les joueurs qui la cochent sur le même GP obtiennent le +1 pt.
+    const foundInPreviousGp = Object.values(this._data.players())
+      .some(other => other.id !== id &&
+        other.checkedGp?.[idx] !== undefined &&
+        (other.checkedGp[idx] as number) < currentGpIdx);
 
     if (ch.has(idx)) {
       ch.delete(idx);
       score = Math.max(0, score - pts);
-      // Reprise du bonus si cet joueur était le seul à l'avoir cochée
-      if (!otherHasIt) score = Math.max(0, score - 1);
+      // Reprise du bonus : personne ne l'avait trouvé dans un GP précédent
+      if (!foundInPreviousGp) score = Math.max(0, score - 1);
+      delete checkedGp[idx];
       // reset streak on uncheck
       this._streak.set(0);
       if (this._streakTimer) { clearTimeout(this._streakTimer); this._streakTimer = null; }
     } else {
       ch.add(idx);
       score += pts;
-      // Bonus +1 si premier joueur à cocher cette cellule
-      if (!otherHasIt) {
+      // +1 bonus si personne ne l'a trouvé dans un GP précédent (même GP = même bonus)
+      if (!foundInPreviousGp) {
         score += 1;
         this._firstFinder.set({ tag: cell?.tag ?? '', emoji: cell?.emoji ?? '🥇' });
       }
+      checkedGp[idx] = currentGpIdx;
       // increment streak, auto-reset after 7 s of inactivity
       this._streak.update(s => s + 1);
       if (this._streakTimer) clearTimeout(this._streakTimer);
       this._streakTimer = setTimeout(() => this._streak.set(0), 7000);
     }
 
-    await this._data.updatePlayer({ ...p, checked: [...ch], score });
+    await this._data.updatePlayer({ ...p, checked: [...ch], checkedGp, score });
     return await this._applyLines(true);
   }
 
