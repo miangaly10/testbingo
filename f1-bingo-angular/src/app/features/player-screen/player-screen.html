@@ -1,4 +1,9 @@
 <div id="playerScreen">
+  <!-- Theme toggle (top-right corner) -->
+  <button class="ps-theme-btn" (click)="theme.toggle()" [title]="theme.isDark() ? 'Passer en mode clair' : 'Passer en mode sombre'">
+    {{ theme.isDark() ? '☀️' : '🌙' }}
+  </button>
+
   <div class="ps-badge">F1 2026 · Saison</div>
   <div class="ps-title">F1 BINGO</div>
   <div class="ps-sub">Choisissez votre profil joueur</div>

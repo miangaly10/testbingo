@@ -6,6 +6,7 @@ import { FormsModule } from '@angular/forms';
 import { DataService } from '../../core/services/data.service';
 import { AuthService } from '../../core/services/auth.service';
 import { DialogService } from '../../shared/services/dialog.service';
+import { ThemeService } from '../../shared/services/theme.service';
 import { AvatarComponent } from '../../shared/components/avatar/avatar.component';
 import { EMOJI_CATS, EMOJIS } from '../../core/data/emojis.data';
 import { F1_TEAMS } from '../../core/data/teams.data';
@@ -28,6 +29,7 @@ export class PlayerScreenComponent implements OnInit, OnDestroy {
   private _auth   = inject(AuthService);
   private _router  = inject(Router);
   private _dlg     = inject(DialogService);
+  readonly theme   = inject(ThemeService);
 
   openLiveTracker(): void { this._router.navigate(['/live']); }
 

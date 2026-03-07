@@ -3,6 +3,7 @@
   <div class="sb-bar">
     <button class="sb-btn" (click)="showScoreboard.set(true)">🏆 Classement</button>
     <button class="sb-btn" (click)="showHistory.set(true)">📋 Historique</button>
+    <button class="sb-btn" (click)="showGpHistory.set(true)">🏜️ GP Stats</button>
     @if (isOwner()) {
       <button class="sb-btn sb-btn--icon" (click)="showSettings.set(true)" title="Paramètres">⚙️</button>
     }
@@ -114,7 +115,7 @@
     </div>
   }
 
-  <!-- History panel -->
+  <!-- History panel (manual race results) -->
   @if (showHistory()) {
     <div class="player-browse-overlay" (click)="showHistory.set(false)">
       <div class="player-browse-card hist-card" (click)="$event.stopPropagation()">
@@ -133,6 +134,36 @@
         }
         <div style="text-align:center;margin-top:14px">
           <button class="btn bs" (click)="showHistory.set(false)">Fermer</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- GP Stats Modal (checkedGp breakdown by race) -->
+  @if (showGpHistory()) {
+    <div class="player-browse-overlay" (click)="showGpHistory.set(false)">
+      <div class="player-browse-card hist-card" (click)="$event.stopPropagation()">
+        <div class="pb-header">🏜️ Stats par Grand Prix</div>
+        @if (gpHistoryByRace().length === 0) {
+          <div class="pb-empty">Aucune case cochée pour le moment.<br>Les points par GP s'afficheront ici dès que vous cocherez des cases.</div>
+        }
+        @for (gp of gpHistoryByRace(); track gp.gpName) {
+          <div class="hist-row">
+            <div class="hist-gp">
+              <img class="gp-flag-img" [src]="'https://flagcdn.com/20x15/' + gp.flag + '.png'" [alt]="gp.gpName" />
+              {{ gp.gpName }}
+            </div>
+            <div class="hist-score gp-stat-pts">+{{ gp.pts }} pts</div>
+            <div class="hist-lines gp-stat-cells">{{ gp.cellEmojis.length }} case{{ gp.cellEmojis.length > 1 ? 's' : '' }}</div>
+          </div>
+          <div class="hist-cells-row">
+            @for (ce of gp.cellEmojis; track ce) {
+              <span class="hist-cell-chip">{{ ce }}</span>
+            }
+          </div>
+        }
+        <div style="text-align:center;margin-top:14px">
+          <button class="btn bs" (click)="showGpHistory.set(false)">Fermer</button>
         </div>
       </div>
     </div>
@@ -173,15 +204,17 @@
       <div class="streak-badge">🔥 {{ game.streak() }} en série !</div>
     }
 
-    <!-- Bingo grid -->
-    <app-bingo-grid
-      [cells]="displayCells()"
-      [checked]="displayChecked()"
-      [blines]="displayBlines()"
-      [editMode]="isSpectating() ? false : editMode()"
-      (cellClicked)="onCellClick($event)"
-      (cellsSwapped)="onCellsSwapped($event)"
-    />
+    <!-- Bingo grid (wrapped for screenshot) -->
+    <div id="shareTarget">
+      <app-bingo-grid
+        [cells]="displayCells()"
+        [checked]="displayChecked()"
+        [blines]="displayBlines()"
+        [editMode]="isSpectating() ? false : editMode()"
+        (cellClicked)="onCellClick($event)"
+        (cellsSwapped)="onCellsSwapped($event)"
+      />
+    </div>
 
     @if (editMode() && !isSpectating()) {
       <div class="drag-hint show">🔀 Glissez les cases pour les réorganiser — sauvegarde auto</div>
@@ -190,6 +223,9 @@
     <!-- Controls -->
     @if (isOwner() && !isSpectating()) {
       <div class="controls">
+        <button class="btn bp" (click)="shareGrid()" [disabled]="isSharing()" title="Capturer et partager la grille">
+          {{ isSharing() ? '⏳ Capture...' : '📸 Partager ma grille' }}
+        </button>
         @if (seasonLocked()) {
           <button class="btn bg" disabled title="La saison a commencé — la grille est verrouillée">
             🔒 Grille verrouillée (saison en cours)

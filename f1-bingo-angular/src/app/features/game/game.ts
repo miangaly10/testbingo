@@ -4,6 +4,7 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { SlicePipe } from '@angular/common';
 import { Subscription } from 'rxjs';
+import html2canvas from 'html2canvas';
 import { DataService } from '../../core/services/data.service';
 import { AuthService } from '../../core/services/auth.service';
 import { GameService } from '../../core/services/game.service';
@@ -12,6 +13,7 @@ import { ToastService } from '../../shared/services/toast.service';
 import { SoundService } from '../../shared/services/sound.service';
 import { Cell } from '../../core/models/cell.model';
 import { BINGO_LINES } from '../../core/data/cells.data';
+import { SCORE_MAP } from '../../core/data/cells.data';
 import { F1_TEAMS } from '../../core/data/teams.data';
 import { BingoGridComponent } from './bingo-grid/bingo-grid';
 import { PlayerBarComponent } from './player-bar/player-bar';
@@ -94,6 +96,7 @@ export class GameComponent implements OnInit, OnDestroy {
   showScoreboard   = signal(false);
   showHistory      = signal(false);
   showSettings     = signal(false);
+  showGpHistory    = signal(false);
   editCellIdx      = signal<number | null>(null);
   showAvatarPicker = signal(false);
   showPlayerBrowse = signal(false);
@@ -132,6 +135,43 @@ export class GameComponent implements OnInit, OnDestroy {
   displayCells   = computed(() => this.isSpectating() ? this.spectatedCells()   : this.game.cells());
   displayChecked = computed(() => this.isSpectating() ? this.spectatedChecked() : this.game.checkedSet());
   displayBlines  = computed(() => this.isSpectating() ? this.spectatedBlines()  : this.game.isBlineCell());
+
+  // ── GP History by race ──
+  gpHistoryByRace = computed(() => {
+    const p     = this.currentPlayer();
+    const cells = this.game.cells();
+    if (!p?.checkedGp) return [];
+
+    const byGp = new Map<number, number[]>();
+    Object.entries(p.checkedGp).forEach(([cellIdxStr, gpIdx]) => {
+      const list = byGp.get(gpIdx as number) ?? [];
+      list.push(Number(cellIdxStr));
+      byGp.set(gpIdx as number, list);
+    });
+
+    const result: { gpName: string; flag: string; pts: number; cellEmojis: string[] }[] = [];
+    byGp.forEach((cellIdxs, gpIdx) => {
+      const gp = F1_CALENDAR_2026[gpIdx];
+      if (!gp) return;
+      const pts = cellIdxs.reduce((sum, idx) => {
+        const prob = cells[idx]?.prob || 'pm';
+        return sum + (SCORE_MAP[prob] ?? 0);
+      }, 0);
+      result.push({
+        gpName:     gp.name,
+        flag:       gp.cc,
+        pts,
+        cellEmojis: cellIdxs.map(i => (cells[i]?.emoji ?? '') + ' ' + (cells[i]?.tag ?? '')),
+      });
+    });
+    return result.sort((a, b) => {
+      const iA = F1_CALENDAR_2026.findIndex(g => g.name === a.gpName);
+      const iB = F1_CALENDAR_2026.findIndex(g => g.name === b.gpName);
+      return iA - iB;
+    });
+  });
+
+  isSharing = signal(false);
 
   // ── Team accent color ──
   accentColor = computed(() => {
@@ -368,6 +408,39 @@ export class GameComponent implements OnInit, OnDestroy {
   closeWin(): void { this.game.closeWin(); }
 
   openLiveTracker(): void { this._router.navigate(['/live']); }
+
+  // ── Share grid as image ──
+  async shareGrid(): Promise<void> {
+    const el = document.querySelector('#shareTarget') as HTMLElement | null;
+    if (!el || this.isSharing()) return;
+    this.isSharing.set(true);
+    try {
+      const canvas = await html2canvas(el, {
+        backgroundColor: '#12121a',
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+      });
+      canvas.toBlob(async blob => {
+        if (!blob) return;
+        const file = new File([blob], 'f1-bingo-grid.png', { type: 'image/png' });
+        if (navigator.canShare?.({ files: [file] })) {
+          await navigator.share({ files: [file], title: 'Ma grille F1 Bingo 2026' }).catch(() => {});
+        } else {
+          // Fallback: trigger download
+          const url = URL.createObjectURL(blob);
+          const a   = document.createElement('a');
+          a.href     = url;
+          a.download = 'f1-bingo-grid.png';
+          a.click();
+          URL.revokeObjectURL(url);
+        }
+      }, 'image/png');
+    } finally {
+      this.isSharing.set(false);
+    }
+  }
 
   // ── Confetti ──
   triggerConfetti(): void {

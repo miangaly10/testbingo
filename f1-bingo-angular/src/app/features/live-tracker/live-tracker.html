@@ -12,6 +12,11 @@
       <div class="lt-status-badge" [class]="sessionStatus().includes('LIVE') ? 'live' : ''">
         {{ sessionStatus() }}
       </div>
+      @if (weekendSessions().length > 1) {
+        <button class="lt-sess-pick-btn" (click)="showSessionPicker.set(true)" title="Changer de session">
+          🗂️ Session
+        </button>
+      }
     } @else {
       <div class="lt-session-info"><span class="lt-session-name">Live Tracker</span></div>
     }
@@ -24,6 +29,29 @@
     </div>
   </header>
 
+  <!-- ── Session picker overlay ────────────────────────────────────────────── -->
+  @if (showSessionPicker()) {
+    <div class="lt-sess-overlay" (click)="showSessionPicker.set(false)">
+      <div class="lt-sess-card" (click)="$event.stopPropagation()">
+        <div class="lt-sess-card-header">
+          <span class="lt-sess-card-title">🗂️ Sessions du weekend</span>
+          <button class="lt-sess-close" (click)="showSessionPicker.set(false)">✕</button>
+        </div>
+        @for (s of weekendSessions(); track s.session_key) {
+          <button
+            class="lt-sess-item"
+            [class.lt-sess-item--active]="s.session_key === session()!.session_key"
+            (click)="switchToSession(s)"
+          >
+            <span class="lt-sess-item-label">{{ sessionLabel(s) }}</span>
+            <span class="lt-sess-item-name">{{ s.session_name }}</span>
+            <span class="lt-sess-item-status">{{ sessionStatusIcon(s) }}</span>
+          </button>
+        }
+      </div>
+    </div>
+  }
+
   <!-- ── Loading / error ───────────────────────────────────────────────────── -->
   @if (loading()) {
     <div class="lt-loading">
@@ -35,12 +63,19 @@
   } @else {
 
     <!-- ── Flag / Race Control bar ──────────────────────────────────────────── -->
-    <div class="lt-rc-bar" [class]="trackFlag().cls">
+    <div class="lt-rc-bar" [class]="trackFlag().cls" [class.lt-rc-bar--critical]="trackFlag().critical">
       <span class="lt-flag-label">{{ trackFlag().label }}</span>
       @if (latestRCMsg()) {
         <span class="lt-rc-msg">{{ latestRCMsg() }}</span>
       }
     </div>
+
+    <!-- ── Critical flag overlay banner ────────────────────────────────────── -->
+    @if (trackFlag().critical) {
+      <div class="lt-flag-banner" [class]="'lt-flag-banner--' + trackFlag().cls">
+        <span class="lt-flag-banner-icon">{{ trackFlag().label }}</span>
+      </div>
+    }
 
     <!-- ── Weather strip ────────────────────────────────────────────────────── -->
     @if (weather()) {
@@ -82,6 +117,7 @@
       <section class="lt-board">
         <div class="lt-board-header">
           <span class="col-pos">POS</span>
+          <span class="col-pin"></span>
           <span class="col-driver">PILOTE</span>
           <span class="col-gap">ÉCART</span>
           <span class="col-int">INT</span>
@@ -95,6 +131,7 @@
             class="lt-row"
             [class.lt-row--selected]="selectedDriver()?.driver_number === row.driver.driver_number"
             [class.lt-row--leader]="row.pos === 1"
+            [class.lt-row--pinned]="row.pinned"
             (click)="selectDriver(row.driver)"
           >
             <!-- Team color stripe -->
@@ -102,6 +139,13 @@
 
             <!-- Position -->
             <span class="col-pos lt-pos" [class.lt-pos--p1]="row.pos === 1">{{ row.pos }}</span>
+
+            <!-- Pin button -->
+            <button class="col-pin lt-pin-btn" [class.lt-pin-btn--active]="row.pinned"
+              (click)="$event.stopPropagation(); togglePin(row.driver.driver_number)"
+              [title]="row.pinned ? 'Désépingler' : 'Épingler'">
+              {{ row.pinned ? '📌' : '📍' }}
+            </button>
 
             <!-- Driver -->
             <div class="col-driver lt-driver-info">
@@ -121,7 +165,11 @@
 
             <!-- Sectors -->
             <span class="col-sectors lt-sectors">
-              {{ row.s1 ?? '——.———' }} · {{ row.s2 ?? '——.———' }} · {{ row.s3 ?? '——.———' }}
+              <span class="lt-sector" [class]="row.s1Color ?? ''">{{ row.s1 ?? '——.———' }}</span>
+              <span class="lt-sector-sep"> · </span>
+              <span class="lt-sector" [class]="row.s2Color ?? ''">{{ row.s2 ?? '——.———' }}</span>
+              <span class="lt-sector-sep"> · </span>
+              <span class="lt-sector" [class]="row.s3Color ?? ''">{{ row.s3 ?? '——.———' }}</span>
             </span>
 
             <!-- Tyre -->
@@ -391,7 +439,7 @@
 
               <!-- Driver dots -->
               @for (dot of mapDots(); track dot.driver.driver_number) {
-                <g class="mp-dot-group">
+                <g class="mp-dot-group" [class.mp-dot-pinned]="dot.driver.driver_number === pinnedDriverNumber()">
                   <!-- Outer glow for P1 -->
                   @if (dot.pos === 1) {
                     <circle
@@ -401,6 +449,18 @@
                       [attr.fill]="'#' + dot.driver.team_colour"
                       opacity="0.3"
                       class="mp-p1-pulse"
+                    />
+                  }
+                  <!-- Pinned driver highlight ring -->
+                  @if (dot.driver.driver_number === pinnedDriverNumber()) {
+                    <circle
+                      [attr.cx]="dot.x"
+                      [attr.cy]="dot.y"
+                      r="13"
+                      fill="none"
+                      stroke="#FFD700"
+                      stroke-width="2"
+                      class="mp-pin-ring"
                     />
                   }
                   <!-- Driver circle -->
@@ -429,11 +489,14 @@
           <aside class="mp-list">
             <div class="mp-list-title">Positions</div>
             @for (dot of mapDots().slice().sort(sortByPos); track dot.driver.driver_number) {
-              <div class="mp-list-row">
+              <div class="mp-list-row" [class.mp-list-row--pinned]="dot.driver.driver_number === pinnedDriverNumber()">
                 <span class="mp-list-pos" [class.mp-list-pos--p1]="dot.pos === 1">{{ dot.pos }}</span>
                 <span class="mp-list-dot" [ngStyle]="{'background': '#' + dot.driver.team_colour}"></span>
                 <span class="mp-list-abbr" [ngStyle]="{'color': '#' + dot.driver.team_colour}">{{ dot.driver.name_acronym }}</span>
                 <span class="mp-list-team">{{ dot.driver.team_name }}</span>
+                <button class="mp-pin-btn" [class.mp-pin-btn--active]="dot.driver.driver_number === pinnedDriverNumber()"
+                  (click)="togglePin(dot.driver.driver_number)"
+                  [title]="isPinned(dot.driver.driver_number) ? 'Désépingler' : 'Épingler'">📌</button>
               </div>
             }
           </aside>

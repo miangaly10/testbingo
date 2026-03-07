@@ -94,6 +94,143 @@
   font-weight: 600;
 }
 
+.lt-theme-btn {
+  background: transparent;
+  border: 1px solid #333;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color .15s;
+  &:hover { border-color: #E8002D; }
+}
+
+// ── Session picker button & overlay ──────────────────────────────────────────
+.lt-sess-pick-btn {
+  background: rgba(255,255,255,.07);
+  border: 1px solid #444;
+  color: #ccc;
+  padding: 4px 10px;
+  border-radius: 5px;
+  font-size: 12px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all .15s;
+  &:hover { border-color: #E8002D; color: #fff; }
+}
+
+.lt-sess-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  background: rgba(0,0,0,.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: lt-fade-in .15s ease;
+}
+
+@keyframes lt-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.lt-sess-card {
+  background: #0d0d1a;
+  border: 1px solid #2a2a3a;
+  border-radius: 14px;
+  width: 100%;
+  max-width: 340px;
+  overflow: hidden;
+  box-shadow: 0 24px 64px rgba(0,0,0,.8);
+  animation: lt-slide-up .18s cubic-bezier(.34,1.56,.64,1);
+}
+
+@keyframes lt-slide-up {
+  from { transform: translateY(14px) scale(.97); opacity: 0; }
+  to   { transform: translateY(0)    scale(1);   opacity: 1; }
+}
+
+.lt-sess-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid #2a2a3a;
+}
+
+.lt-sess-card-title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.lt-sess-close {
+  background: rgba(255,255,255,.07);
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  color: #888;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .15s;
+  &:hover { background: rgba(255,255,255,.15); color: #fff; }
+}
+
+.lt-sess-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 16px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #1e1e2a;
+  color: #ccc;
+  cursor: pointer;
+  text-align: left;
+  transition: background .12s;
+  &:last-child { border-bottom: none; }
+  &:hover { background: rgba(255,255,255,.05); }
+  &.lt-sess-item--active {
+    background: rgba(232,0,45,.1);
+    border-left: 3px solid #E8002D;
+    padding-left: 13px;
+  }
+}
+
+.lt-sess-item-label {
+  font-size: 13px;
+  font-weight: 800;
+  font-family: 'Barlow Condensed', sans-serif;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #fff;
+  min-width: 64px;
+}
+
+.lt-sess-item-name {
+  flex: 1;
+  font-size: 12px;
+  color: #888;
+}
+
+.lt-sess-item-status {
+  font-size: 14px;
+}
+
 // ── Loading & Error ───────────────────────────────────────────────────────────
 .lt-loading {
   flex: 1;
@@ -231,6 +368,7 @@
 
 // Column widths
 .col-pos     { width: 36px;  flex-shrink: 0; }
+.col-pin     { width: 28px;  flex-shrink: 0; }
 .col-driver  { width: 180px; flex-shrink: 0; }
 .col-gap     { width: 80px;  flex-shrink: 0; }
 .col-int     { width: 80px;  flex-shrink: 0; }
@@ -252,6 +390,11 @@
   &:hover         { background: #14141e; }
   &--selected     { background: #16161f; box-shadow: inset 0 0 0 1px #333; }
   &--leader       { }
+  &--pinned       {
+    background: rgba(255, 215, 0, .04);
+    border-left: 2px solid #FFD700;
+    &:hover { background: rgba(255, 215, 0, .07); }
+  }
 }
 
 .lt-stripe {
@@ -314,12 +457,48 @@
   font-family: 'Courier New', monospace;
 }
 
+// Pin button in leaderboard
+.lt-pin-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px;
+  opacity: .35;
+  transition: opacity .15s, transform .15s;
+  line-height: 1;
+  &:hover { opacity: .7; transform: scale(1.2); }
+  &--active { opacity: 1; }
+}
+
+// Sector colors
 .lt-sectors {
   font-size: 10px;
-  color: #666;
   font-variant-numeric: tabular-nums;
   font-family: 'Courier New', monospace;
+  display: flex;
+  align-items: center;
+  gap: 0;
 }
+
+.lt-sector {
+  display: inline-block;
+  padding: 1px 3px;
+  border-radius: 2px;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  color: #666;
+  transition: color .2s, background .2s;
+
+  &.sector-purple {
+    color: #bf7fff;
+    background: rgba(191,127,255,.12);
+    font-weight: 700;
+  }
+  &.sector-normal { color: #888; }
+}
+
+.lt-sector-sep { color: #333; font-size: 10px; }
 
 .lt-tyre {
   display: flex;
@@ -1102,9 +1281,33 @@
   &:hover { opacity: .8; }
 }
 
+// Pinned driver highlight ring on map
+.mp-pin-ring {
+  animation: mp-pin-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes mp-pin-pulse {
+  0%, 100% { opacity: 1; stroke-width: 2; }
+  50%       { opacity: .5; stroke-width: 3; }
+}
+
+// Pin button in map list
+.mp-pin-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 10px;
+  opacity: .3;
+  margin-left: auto;
+  padding: 0 4px;
+  transition: opacity .15s;
+  &:hover { opacity: .7; }
+  &--active { opacity: 1; }
+}
+
 // Side list
 .mp-list {
-  width: 160px;
+  width: 180px;
   flex-shrink: 0;
   background: #0d0d14;
   border: 1px solid #1a1a28;
@@ -1139,6 +1342,12 @@
 
   &:last-child { border-bottom: none; }
   &:hover { background: #111; }
+
+  &--pinned {
+    background: rgba(255,215,0,.06);
+    border-left: 2px solid #FFD700;
+    padding-left: 10px;
+  }
 }
 
 .mp-list-pos {
@@ -1257,4 +1466,111 @@
   // Carte — réduire padding
   .mp-section { padding: 10px; }
   .mp-svg-container { min-height: 220px; }
+}
+
+/* ── LIGHT THEME ─────────────────────────────────────────────────────────── */
+:host-context(html.light-theme) {
+  // Shell & header
+  .lt-shell       { background: #f4f4f8; color: #111122; }
+  .lt-header      { background: #fff; border-bottom-color: #e0e0ee; }
+  .lt-session-name{ color: #111122; }
+  .lt-circuit     { color: #666680; }
+  .lt-status-badge{ background: #eeeeee; color: #555566; border-color: #ccccdd; }
+  .lt-back        { border-color: #ccccdd; color: #555566; }
+  .lt-back:hover  { border-color: #E8002D; color: #111122; }
+  .lt-update      { color: #888899; }
+  .lt-logo        { color: #888899; }
+  .lt-theme-btn   { background: rgba(0,0,0,.06); border-color: rgba(0,0,0,.15);
+                    &:hover { background: rgba(0,0,0,.12); } }
+  .lt-sess-pick-btn { background: rgba(0,0,0,.05); border-color: #bbb; color: #444;
+                      &:hover { border-color: #E8002D; color: #111; } }
+  .lt-sess-card     { background: #fff; border-color: #d0d0e0; }
+  .lt-sess-card-header { border-bottom-color: #e0e0ee; }
+  .lt-sess-card-title  { color: #111122; }
+  .lt-sess-close    { background: rgba(0,0,0,.05); color: #888;
+                      &:hover { background: rgba(0,0,0,.12); color: #111; } }
+  .lt-sess-item     { border-bottom-color: #eeeeee; color: #333344;
+                      &:hover { background: rgba(0,0,0,.04); }
+                      &.lt-sess-item--active { background: rgba(232,0,45,.07); } }
+  .lt-sess-item-label { color: #111122; }
+  .lt-sess-item-name  { color: #888; }
+
+  // Race control bar
+  .lt-rc-bar               { background: #f0f0f8; border-bottom-color: #ddd; }
+  .lt-rc-bar.flag-green    { background: #e8f5e9; }
+  .lt-rc-bar.flag-yellow   { background: #fffde7; }
+  .lt-rc-bar.flag-red      { background: #ffebee; }
+  .lt-rc-bar.flag-sc       { background: #fff8e1; }
+  .lt-rc-bar.flag-vsc      { background: #fff8e1; }
+
+  // Weather
+  .lt-weather { background: #f8f8ff; border-bottom-color: #e0e0ee; color: #555566; }
+
+  // Tabs
+  .lt-tabs         { background: #f0f0f8; border-bottom-color: #ddd; }
+  .lt-tab          { color: #888899; }
+  .lt-tab:hover    { color: #444455; }
+  .lt-tab--active  { color: #111122; }
+  .lt-tab--active::after { background: #E8002D; }
+
+  // Leaderboard
+  .lt-board-header { background: #f0f0f8; border-bottom-color: #ddd; color: #999aaa; }
+  .lt-row          { border-bottom-color: #eeeeee; }
+  .lt-row:hover    { background: #f4f4ff; }
+  .lt-row--selected{ background: #ededff; }
+  .lt-row--pinned  { background: rgba(255,215,0,.08); border-left-color: gold; }
+  .lt-pos          { color: #999aaa; }
+  .lt-abbr         { color: #111122; }
+  .lt-team         { color: #888899; }
+  .lt-gap, .lt-int { color: #444455; }
+  .lt-lap-time     { color: #222233; }
+  .lt-sector.sector-normal { color: #555566; }
+  .lt-empty        { color: #888899; }
+  .lt-pin-btn      { color: #aaa; &:hover { color: #E8002D; } }
+
+  // Telemetry panel
+  .lt-telem        { background: #ffffff; border-left-color: #e0e0ee; }
+  .lt-telem-header { background: #f8f8ff; border-bottom-color: #e0e0ee; }
+  .lt-telem-name   { color: #111122; }
+  .lt-telem-team   { color: #888899; }
+  .lt-speed-val    { color: #111122; }
+  .lt-gear-val     { color: #111122; }
+  .lt-bar-track    { background: #e0e0ee; border-color: #ccccdd; }
+  .lt-bar-val      { color: #555566; }
+  .lt-chart        { background: #f4f4ff; border-color: #ddd; }
+
+  // Strategy tab
+  .ts-driver-col   { background: transparent; }
+  .ts-row          { border-bottom-color: #eeeeee; }
+  .ts-row:hover .ts-timeline { background: #f0f0f8; }
+  .ts-timeline     { background: #e8e8f4; }
+  .ts-pos          { color: #999aaa; }
+  .ts-age          { color: #777788; }
+  .ts-abbr         { color: #111122; }
+
+  // Radio tab
+  .rd-filter-bar   { background: #f0f0f8; border-bottom-color: #ddd; }
+  .rd-filter-btn   { border-color: #ddd; color: #888899; background: transparent; }
+  .rd-filter-btn.active { color: #111122; background: #e0e0ee; }
+  .rd-msg          { border-bottom-color: #eeeeee; }
+  .rd-msg:hover    { background: #f4f4ff; }
+  .rd-abbr         { color: #111122; }
+  .rd-team         { color: #888899; }
+  .rd-play         { background: #eeeeee; border-color: #ccccdd; color: #555566; }
+  .rd-time         { color: #888899; }
+  .rd-bar          { background: #cccccc; }
+
+  // Map tab
+  .mp-section          { background: transparent; }
+  .mp-svg-container    { background: #f0f0f8; border-color: #ddd; }
+  .mp-track            { stroke: #bbbbcc; }
+  .mp-dot-label        { fill: #111122; stroke: rgba(255,255,255,.8); }
+  .mp-list             { background: #f0f0f8; border-color: #ddd; }
+  .mp-list-title       { color: #888899; border-bottom-color: #ddd; }
+  .mp-list-row         { border-bottom-color: #e8e8f0; }
+  .mp-list-row:hover   { background: #e8e8f8; }
+  .mp-list-row--pinned { background: rgba(255,215,0,.12); }
+  .mp-list-team        { color: #888899; }
+  .mp-list-pos         { color: #888899; }
+  .mp-pin-btn          { color: #aaa; &:hover { color: #E8002D; } }
 }

@@ -189,6 +189,16 @@ export class OpenF1Service {
     return this.get<OF1Session>('sessions', { session_type: 'Race', year });
   }
 
+  /** All session types (Practice, Qualifying, Sprint, Race) for a given year. */
+  getAllSessions(year: number = new Date().getFullYear()): Promise<OF1Session[]> {
+    return this.get<OF1Session>('sessions', { year });
+  }
+
+  /** All sessions belonging to a specific meeting (weekend). */
+  getMeetingSessions(meetingKey: number): Promise<OF1Session[]> {
+    return this.get<OF1Session>('sessions', { meeting_key: meetingKey });
+  }
+
   getDrivers(sessionKey: number | 'latest' = 'latest'): Promise<OF1Driver[]> {
     return this.get<OF1Driver>('drivers', { session_key: sessionKey });
   }

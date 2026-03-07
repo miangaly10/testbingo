@@ -48,6 +48,26 @@ body {
   overflow-y: auto;
 }
 
+/* Theme toggle on player screen */
+.ps-theme-btn {
+  position: fixed;
+  top: 14px;
+  right: 16px;
+  z-index: 10;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .15s, border-color .15s;
+  &:hover { background: rgba(255,255,255,.16); border-color: rgba(255,255,255,.3); }
+}
+
 .ps-badge {
   display: inline-block;
   background: var(--red);
@@ -1255,10 +1275,31 @@ app-bingo-cell { display: contents; }
   &:last-child { border-bottom: none; }
 }
 
-.hist-gp   { flex: 1; font-weight: 700; font-size: 15px; letter-spacing: 1px; }
+.hist-gp   { flex: 1; font-weight: 700; font-size: 15px; letter-spacing: 1px; display: flex; align-items: center; gap: 6px; }
 .hist-date { font-size: 11px; color: var(--muted); letter-spacing: 1px; white-space: nowrap; }
 .hist-score { font-family: 'Russo One', sans-serif; font-size: 18px; color: var(--gold); min-width: 70px; text-align: right; }
 .hist-lines { font-size: 12px; color: var(--muted); min-width: 65px; text-align: right; }
+
+.gp-stat-pts   { color: #4caf50; font-weight: 700; }
+.gp-stat-cells { color: var(--muted); font-size: 11px; }
+
+.hist-cells-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 4px 4px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.hist-cell-chip {
+  background: rgba(255,255,255,.06);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  font-size: 10px;
+  padding: 2px 8px;
+  color: #aaa;
+  white-space: nowrap;
+}
 
 /* ── MOBILE: sb-bar ────────────────────────────────────────────────────────── */
 @media (max-width: 600px) {
@@ -1269,4 +1310,121 @@ app-bingo-cell { display: contents; }
   .gp-timer { font-size: 12px; min-width: 120px; }
   .gp-label { font-size: 10px; }
   .streak-badge { font-size: 14px; }
+}
+
+/* ── LIGHT THEME ─────────────────────────────────────────────────────────── */
+html.light-theme {
+  --darker:  #f0f0f6;
+  --card-bg: #ffffff;
+  --border:  #d0d0e0;
+  --text:    #111122;
+  --muted:   #666680;
+
+  background: #f4f4f8;
+  background-image:
+    radial-gradient(ellipse at 20% 20%, rgba(232,0,45,.05) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 80%, rgba(255,215,0,.04) 0%, transparent 60%);
+  color: #111122;
+
+  /* ── Player screen ── */
+  #playerScreen {
+    background: #f4f4f8;
+    background-image: radial-gradient(ellipse at center, rgba(232,0,45,.07) 0%, transparent 70%);
+  }
+
+  .ps-theme-btn {
+    background: rgba(0,0,0,.06);
+    border-color: rgba(0,0,0,.15);
+    &:hover { background: rgba(0,0,0,.12); }
+  }
+
+  /* Tutorial button */
+  .tuto-btn {
+    background: rgba(0,0,0,.05);
+    border-color: #c8c8d8;
+    color: #333344;
+    &:hover { background: rgba(0,0,0,.1); border-color: rgba(255,215,0,.7); }
+  }
+
+  /* Tutorial modal */
+  .tuto-close {
+    background: rgba(0,0,0,.06);
+    &:hover { background: rgba(0,0,0,.14); color: #111122; }
+  }
+  .tuto-modal-title       { color: #111122; }
+  .tuto-intro             { color: rgba(17,17,34,.65); }
+  .tuto-section ul li     { color: rgba(17,17,34,.7); }
+  .tuto-row               { color: rgba(17,17,34,.7); }
+  .tuto-pill.base         { background: rgba(0,0,0,.08); color: #333344; }
+
+  /* ── Game page ── */
+
+  /* Cells */
+  .ctag {
+    color: rgba(17,17,34,.45);
+    background: rgba(0,0,0,.05);
+    border-color: rgba(0,0,0,.08);
+  }
+
+  /* Buttons */
+  .btn.bs           { background: #e4e4ee; color: #333344; border-color: #c8c8d8; }
+  .btn.bs:hover     { background: #d8d8ec; }
+
+  /* GP countdown ribbon */
+  .gp-countdown     { background: rgba(0,0,0,.04); border-color: rgba(0,0,0,.08); }
+
+  /* Scoreboard / sb bar */
+  .sb-btn           { background: #fff; border-color: #d0d0e0; color: #333344;
+                      &:hover { border-color: var(--gold); color: #111122; } }
+
+  /* Settings modal (game) */
+  .set-title        { color: #111122; }
+  .set-close        { background: rgba(0,0,0,.06);
+                      &:hover { background: rgba(0,0,0,.14); color: #111122; } }
+  .set-player-info  { background: rgba(0,0,0,.03); border-color: #d8d8e8; }
+  .set-player-name  { color: #111122; }
+  .set-player-stats { color: #666680; }
+
+  /* Edit cell modal */
+  .em-input,
+  .em-textarea    { background: #f0f0f8; border-color: #d0d0e0; color: #111122; }
+  .em-preview     { background: rgba(0,0,0,.03); border-color: #d0d0e0; }
+  .em-prev-text   { color: #111122; }
+
+  /* Emoji dropdown */
+  .emoji-dd-item  { background: rgba(0,0,0,.02); }
+
+  /* ── Dialog component ── */
+  .dlg-card         { background: #fff; border-color: #d0d0e0;
+                      box-shadow: 0 12px 40px rgba(0,0,0,.15); }
+  .dlg-header       { border-bottom-color: #e0e0ee; background: rgba(0,0,0,.02); }
+  .dlg-header.dlg-danger { background: rgba(232,0,45,.06); }
+  .dlg-title        { color: #111122; }
+  .dlg-msg          { color: #444455; }
+  .dlg-input        { background: #f0f0f8; border-color: #ccc; color: #111122; }
+  .dlg-pin-box      { background: #f0f0f8; border-color: #ccc; }
+  .dlg-footer       { border-top-color: #e0e0ee; background: transparent; }
+  .dlg-btn-cancel   { background: #e4e4ee; color: #555566; }
+
+  /* ── Player browser / overlays ── */
+  .player-browse-overlay { background: rgba(0,0,0,.4); }
+  .player-browse-card    { background: #fff; border-color: #d0d0e0; }
+  .pb-name               { color: #111122; }
+  .pb-header             { border-bottom-color: #e0e0ee; }
+  .pb-item:hover         { background: #f0f0ff; }
+
+  /* Settings modal overlay */
+  .set-modal  { background: #fff; border-color: #d0d0e0; color: #111122; }
+  .set-row    { border-bottom-color: #e0e0ee; }
+  .set-row:hover { background: #f4f4ff; }
+
+  /* Pin modal */
+  .pin-card   { background: #fff; border-color: #d0d0e0; }
+
+  /* ── Bingo grid wrapper ── */
+  .wrapper { background: transparent; }
+
+  /* ── GP History ── */
+  .hist-cell-chip { background: rgba(0,0,0,.05); border-color: #d0d0e0; color: #555566; }
+  .gp-stat-pts    { color: #1a7a1a; }
 }

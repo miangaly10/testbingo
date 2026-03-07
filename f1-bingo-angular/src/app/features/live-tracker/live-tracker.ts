@@ -25,6 +25,8 @@ export interface MapDot {
 
 // ── Derived types for the view ────────────────────────────────────────────────
 
+export type SectorColor = 'sector-purple' | 'sector-normal' | null;
+
 export interface LeaderboardRow {
   pos:          number;
   driver:       OF1Driver;
@@ -34,10 +36,14 @@ export interface LeaderboardRow {
   s1:           string | null;
   s2:           string | null;
   s3:           string | null;
+  s1Color:      SectorColor;
+  s2Color:      SectorColor;
+  s3Color:      SectorColor;
   compound:     string;
   tyreAge:      number;
   pitting:      boolean;
   drs:          boolean;
+  pinned:       boolean;
 }
 
 export interface TyreStintSegment {
@@ -112,7 +118,8 @@ export class LiveTrackerComponent implements OnInit, OnDestroy {
   weather        = signal<OF1Weather | null>(null);
   raceControl    = signal<OF1RaceControl[]>([]);
 
-  activeTab      = signal<'leaderboard' | 'strategy' | 'radio' | 'map'>('leaderboard');
+  activeTab           = signal<'leaderboard' | 'strategy' | 'radio' | 'map'>('leaderboard');
+  pinnedDriverNumber  = signal<number | null>(null);
 
   // ── Map state ────────────────────────────────────────────────────────
   readonly MAP_W   = 600;
@@ -195,23 +202,27 @@ export class LiveTrackerComponent implements OnInit, OnDestroy {
   error      = signal<string | null>(null);
   lastUpdate = signal<Date | null>(null);
 
+  // ── Session picker ─────────────────────────────────────────────────────────
+  weekendSessions   = signal<OF1Session[]>([]);  // all sessions of the current GP weekend
+  showSessionPicker = signal(false);
+
   private _pollId:    ReturnType<typeof setInterval> | null = null;
   private _telemId:   ReturnType<typeof setInterval> | null = null;
 
   // ── Derived: flag status ───────────────────────────────────────────────────
-  trackFlag = computed<{ label: string; cls: string }>(() => {
+  trackFlag = computed<{ label: string; cls: string; critical: boolean }>(() => {
     const msgs = this.raceControl();
     for (let i = msgs.length - 1; i >= 0; i--) {
       const f = msgs[i].flag;
       if (!f) continue;
-      if (f === 'GREEN')              return { label: '🟢 GREEN', cls: 'flag-green' };
-      if (f === 'YELLOW')             return { label: '🟡 YELLOW', cls: 'flag-yellow' };
-      if (f === 'RED')                return { label: '🔴 RED FLAG', cls: 'flag-red' };
-      if (f === 'SAFETY CAR')         return { label: '🚗 SAFETY CAR', cls: 'flag-sc' };
-      if (f === 'VIRTUAL SAFETY CAR') return { label: '🟡 VSC', cls: 'flag-vsc' };
-      if (f === 'CHEQUERED')          return { label: '🏁 CHEQUERED', cls: 'flag-chq' };
+      if (f === 'GREEN')              return { label: '🟢 GREEN', cls: 'flag-green', critical: false };
+      if (f === 'YELLOW')             return { label: '🟡 YELLOW', cls: 'flag-yellow', critical: false };
+      if (f === 'RED')                return { label: '🔴 RED FLAG', cls: 'flag-red', critical: true };
+      if (f === 'SAFETY CAR')         return { label: '🚗 SAFETY CAR', cls: 'flag-sc', critical: true };
+      if (f === 'VIRTUAL SAFETY CAR') return { label: '🟡 VSC', cls: 'flag-vsc', critical: true };
+      if (f === 'CHEQUERED')          return { label: '🏁 CHEQUERED', cls: 'flag-chq', critical: false };
     }
-    return { label: '—', cls: '' };
+    return { label: '—', cls: '', critical: false };
   });
 
   latestRCMsg = computed<string>(() => {
@@ -226,31 +237,55 @@ export class LiveTrackerComponent implements OnInit, OnDestroy {
     const intMap     = this.intervals();
     const lapMap     = this.lastLaps();
     const stintMap   = this.stints();
+    const pinned     = this.pinnedDriverNumber();
 
-    return driversArr
-      .map(d => {
-        const pos    = posMap.get(d.driver_number) ?? 99;
-        const iv     = intMap.get(d.driver_number);
-        const lap    = lapMap.get(d.driver_number);
-        const stints = stintMap.get(d.driver_number) ?? [];
-        const stint  = stints[stints.length - 1];
+    // First pass — build raw rows
+    const rows = driversArr.map(d => {
+      const pos    = posMap.get(d.driver_number) ?? 99;
+      const iv     = intMap.get(d.driver_number);
+      const lap    = lapMap.get(d.driver_number);
+      const stints = stintMap.get(d.driver_number) ?? [];
+      const stint  = stints[stints.length - 1];
+      return {
+        pos,
+        driver:   d,
+        gap:      fmtGap(iv?.gap_to_leader ?? null),
+        interval: fmtGap(iv?.interval     ?? null),
+        lastLap:  fmtLap(lap?.lap_duration ?? null),
+        s1:       fmtSector(lap?.duration_sector1 ?? null),
+        s2:       fmtSector(lap?.duration_sector2 ?? null),
+        s3:       fmtSector(lap?.duration_sector3 ?? null),
+        s1Color:  null as SectorColor,
+        s2Color:  null as SectorColor,
+        s3Color:  null as SectorColor,
+        compound: stint?.compound ?? 'UNKNOWN',
+        tyreAge:  stint?.tyre_age_at_start ?? 0,
+        pitting:  false,
+        drs:      false,
+        pinned:   d.driver_number === pinned,
+      } satisfies LeaderboardRow;
+    });
 
-        return {
-          pos,
-          driver:   d,
-          gap:      fmtGap(iv?.gap_to_leader ?? null),
-          interval: fmtGap(iv?.interval     ?? null),
-          lastLap:  fmtLap(lap?.lap_duration ?? null),
-          s1:       fmtSector(lap?.duration_sector1 ?? null),
-          s2:       fmtSector(lap?.duration_sector2 ?? null),
-          s3:       fmtSector(lap?.duration_sector3 ?? null),
-          compound: stint?.compound ?? 'UNKNOWN',
-          tyreAge:  stint?.tyre_age_at_start ?? 0,
-          pitting:  false,
-          drs:      false,
-        } satisfies LeaderboardRow;
-      })
-      .sort((a, b) => a.pos - b.pos);
+    // Second pass — assign sector colors (purple = best across all drivers)
+    const validS1 = rows.map(r => r.s1).filter((v): v is string => v !== null).map(Number);
+    const validS2 = rows.map(r => r.s2).filter((v): v is string => v !== null).map(Number);
+    const validS3 = rows.map(r => r.s3).filter((v): v is string => v !== null).map(Number);
+    const bestS1  = validS1.length ? Math.min(...validS1) : null;
+    const bestS2  = validS2.length ? Math.min(...validS2) : null;
+    const bestS3  = validS3.length ? Math.min(...validS3) : null;
+
+    rows.forEach(r => {
+      r.s1Color = r.s1 !== null ? (Number(r.s1) === bestS1 ? 'sector-purple' : 'sector-normal') : null;
+      r.s2Color = r.s2 !== null ? (Number(r.s2) === bestS2 ? 'sector-purple' : 'sector-normal') : null;
+      r.s3Color = r.s3 !== null ? (Number(r.s3) === bestS3 ? 'sector-purple' : 'sector-normal') : null;
+    });
+
+    // Sort: pinned driver floats to top, then by position
+    return rows.sort((a, b) => {
+      if (a.pinned && !b.pinned) return -1;
+      if (!a.pinned && b.pinned) return 1;
+      return a.pos - b.pos;
+    });
   });
 
   // ── Derived: tyre strategy ─────────────────────────────────────────────────
@@ -307,6 +342,14 @@ export class LiveTrackerComponent implements OnInit, OnDestroy {
   compoundColor(c: string): string { return COMPOUND_COLORS[c] ?? '#888'; }
   compoundAbbr(c: string):  string { return COMPOUND_ABBR[c]   ?? '?'; }
 
+  togglePin(driverNumber: number): void {
+    this.pinnedDriverNumber.update(cur => cur === driverNumber ? null : driverNumber);
+  }
+
+  isPinned(driverNumber: number): boolean {
+    return this.pinnedDriverNumber() === driverNumber;
+  }
+
   drsActive(cd: OF1CarData | null): boolean { return (cd?.drs ?? 0) >= 10; }
 
   readonly sortByPos = (a: MapDot, b: MapDot) => a.pos - b.pos;
@@ -348,10 +391,18 @@ export class LiveTrackerComponent implements OnInit, OnDestroy {
   // ── Initial full load ──────────────────────────────────────────────────────
   private async loadAll(): Promise<void> {
     try {
-      // Fetch all 2026 Race sessions
-      const sessions = await this.api.getRaceSessions(2026);
-      const sess = this.pickBestSession(sessions);
+      // Fetch ALL session types for 2026 (FP, Quali, Sprint, Race)
+      const allSess = await this.api.getAllSessions(2026);
+      const sess = this.pickBestSession(allSess);
       this.session.set(sess);
+
+      // Collect all sessions from the same GP weekend (same meeting_key)
+      if (sess) {
+        const weekend = allSess
+          .filter(s => s.meeting_key === sess.meeting_key)
+          .sort((a, b) => new Date(a.date_start).getTime() - new Date(b.date_start).getTime());
+        this.weekendSessions.set(weekend);
+      }
 
       if (!sess) return;
       const sk = sess.session_key;
@@ -637,4 +688,72 @@ export class LiveTrackerComponent implements OnInit, OnDestroy {
   }
 
   goBack(): void { this.router.navigate(['/']); }
+
+  /** Switch to a different session of the same (or different) weekend. */
+  async switchToSession(sess: OF1Session): Promise<void> {
+    if (sess.session_key === this.session()?.session_key) {
+      this.showSessionPicker.set(false);
+      return;
+    }
+    // Stop polling, reset state
+    if (this._pollId) { clearInterval(this._pollId); this._pollId = null; }
+    this.loading.set(true);
+    this.error.set(null);
+    this.showSessionPicker.set(false);
+    this.session.set(sess);
+    this.drivers.set([]);
+    this.positions.set(new Map());
+    this.intervals.set(new Map());
+    this.lastLaps.set(new Map());
+    this.stints.set(new Map());
+    this.weather.set(null);
+    this.raceControl.set([]);
+    this.radioMessages.set([]);
+    this.selectedDriver.set(null);
+    this.carDataHistory.set([]);
+    this.trackRawPts.set([]);
+    this.driverRawLocs.set(new Map());
+    this.mapLoadedForSk.set(null);
+
+    try {
+      const sk = sess.session_key;
+      const drivers = await this.api.getDrivers(sk);
+      this.drivers.set(drivers);
+      await Promise.all([
+        this.fetchPositions(sk),
+        this.fetchIntervals(sk),
+        this.fetchLaps(sk),
+        this.fetchStints(sk),
+        this.fetchWeather(sk),
+        this.fetchRaceControl(sk),
+        this.fetchTeamRadio(sk),
+      ]);
+      this.fetchTrackOutline(sk);
+      this.lastUpdate.set(new Date());
+    } catch {
+      this.error.set('Impossible de charger les données pour cette session.');
+    }
+    this.loading.set(false);
+    this._stintPollCounter = 0;
+    this._pollId = setInterval(() => this.pollLive(), 1_000);
+  }
+
+  /** Human-readable short label for a session. */
+  sessionLabel(sess: OF1Session): string {
+    const n = sess.session_name?.toLowerCase() ?? '';
+    if (n.includes('practice 1') || n.includes('fp1')) return 'FP1';
+    if (n.includes('practice 2') || n.includes('fp2')) return 'FP2';
+    if (n.includes('practice 3') || n.includes('fp3')) return 'FP3';
+    if (n.includes('sprint qualifying') || n.includes('sprint shootout')) return 'Sprint Q.';
+    if (n.includes('qualifying'))  return 'Qualif.';
+    if (n.includes('sprint'))      return 'Sprint';
+    if (n.includes('race'))        return 'Course';
+    return sess.session_name ?? '?';
+  }
+
+  sessionStatusIcon(sess: OF1Session): string {
+    if (sess.status === 'ontrack')  return '🔴';
+    if (sess.status === 'complete') return '✅';
+    return '⏳';
+  }
 }
