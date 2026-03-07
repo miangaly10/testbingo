@@ -336,8 +336,8 @@ export class LiveTrackerComponent implements OnInit, OnDestroy {
   async ngOnInit(): Promise<void> {
     await this.loadAll();
     this.loading.set(false);
-    // Poll every 5 s — OpenF1 data refreshes every ~3-4 s, no need to hammer it
-    this._pollId = setInterval(() => this.pollLive(), 5_000);
+    // Poll every 1 s — requests are staggered so at most 1–2 req/tick
+    this._pollId = setInterval(() => this.pollLive(), 1_000);
   }
 
   ngOnDestroy(): void {
@@ -379,11 +379,14 @@ export class LiveTrackerComponent implements OnInit, OnDestroy {
 
   // ── Periodic poll ─────────────────────────────────────────────────────────
   //
-  // Staggered refresh rates (tick = 5 s) to stay well under OpenF1 rate limits:
-  //   Every tick  (  5 s): positions, intervals, race_control
-  //   Every 2nd   ( 10 s): laps, car_data (if driver selected), map locations
-  //   Every 6th   ( 30 s): weather, team_radio
-  //   Every 12th  ( 60 s): stints
+  // Tick = 1 s. At most 1–2 requests per tick to stay sous les rate limits :
+  //   Every tick   (  1 s): positions
+  //   Every 3rd    (  3 s): intervals
+  //   Every 5th    (  5 s): race_control
+  //   Every 10th   ( 10 s): laps + (car_data si conducteur sélectionné)
+  //   Every 15th   ( 15 s): map locations (si onglet map actif)
+  //   Every 30th   ( 30 s): weather + team_radio
+  //   Every 60th   ( 60 s): stints
   //
   private async pollLive(): Promise<void> {
     // Skip if a previous poll is still in flight
@@ -408,30 +411,39 @@ export class LiveTrackerComponent implements OnInit, OnDestroy {
       const sk   = sess.session_key;
       const tick = ++this._stintPollCounter;
 
-      // ── Every tick: high-priority live data (3 requests)
-      await Promise.all([
-        this.fetchPositions(sk),
-        this.fetchIntervals(sk),
-        this.fetchRaceControl(sk),
-      ]);
+      // ── Every tick (1 s): positions — donnée la plus volatile
+      await this.fetchPositions(sk);
       this.lastUpdate.set(new Date());
 
-      // ── Every 2nd tick: lap times + map + telemetry
-      if (tick % 2 === 0) {
-        const promises: Promise<void>[] = [this.fetchLaps(sk)];
-        if (this.activeTab() === 'map') promises.push(this.fetchLiveLocations(sk));
-        const d = this.selectedDriver();
-        if (d) promises.push(this.fetchCarData(sk, d.driver_number));
-        await Promise.all(promises);
+      // ── Every 3rd tick (3 s): intervals
+      if (tick % 3 === 0) {
+        await this.fetchIntervals(sk);
       }
 
-      // ── Every 6th tick: weather + radio
-      if (tick % 6 === 0) {
+      // ── Every 5th tick (5 s): race control
+      if (tick % 5 === 0) {
+        await this.fetchRaceControl(sk);
+      }
+
+      // ── Every 10th tick (10 s): laps + télémétrie
+      if (tick % 10 === 0) {
+        await this.fetchLaps(sk);
+        const d = this.selectedDriver();
+        if (d) await this.fetchCarData(sk, d.driver_number);
+      }
+
+      // ── Every 15th tick (15 s): map locations si onglet actif
+      if (tick % 15 === 0 && this.activeTab() === 'map') {
+        await this.fetchLiveLocations(sk);
+      }
+
+      // ── Every 30th tick (30 s): weather + radio
+      if (tick % 30 === 0) {
         await Promise.all([this.fetchWeather(sk), this.fetchTeamRadio(sk)]);
       }
 
-      // ── Every 12th tick: stints (pit strategy rarely changes)
-      if (tick % 12 === 0) {
+      // ── Every 60th tick (60 s): stints (pit strategy rarely changes)
+      if (tick % 60 === 0) {
         await this.fetchStints(sk);
       }
     } finally {
