@@ -18,6 +18,7 @@ export interface Player {
   lines?: number;
   doneLines?: string[];
   bonusLines?: string[];  // lignes pour lesquelles le joueur a obtenu le bonus premier
+  gotFirstMoveBonus?: boolean; // le joueur a reçu le bonus du tout premier cochage de la saison
   grid: Cell[];
   history?: RaceResult[];
 }

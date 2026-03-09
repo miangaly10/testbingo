@@ -96,6 +96,10 @@ export class GameService {
   async toggle(idx: number): Promise<boolean> {
     const id = this._auth.currentPlayerId();
     if (!id || !this._auth.isOwner()) return false;
+
+    // Recharger les données fraîches de Firebase avant de calculer les bonus
+    await this._data.load();
+
     const p = this._data.getPlayer(id);
     if (!p) return false;
 
@@ -107,30 +111,57 @@ export class GameService {
     const currentGpIdx = getCurrentGpIndex();
     const checkedGp = { ...(p.checkedGp ?? {}) };
 
-    // Bonus GP : quelqu'un a-t-il trouvé cette cellule lors d'un GP PRéCÉDENT ?
-    // Si non, tous les joueurs qui la cochent sur le même GP obtiennent le +1 pt.
-    const foundInPreviousGp = Object.values(this._data.players())
-      .some(other => other.id !== id &&
-        other.checkedGp?.[idx] !== undefined &&
-        (other.checkedGp[idx] as number) < currentGpIdx);
+    // Tous les joueurs (sauf moi) — données fraîches post-load
+    const allPlayers = Object.values(this._data.players());
+    const otherPlayers = allPlayers.filter(other => other.id !== id);
+
+    // Aucun joueur (moi inclus) n'a encore coché quoi que ce soit → premier move du jeu
+    const isVeryFirstMove = !p.gotFirstMoveBonus &&
+      (p.checked?.length ?? 0) === 0 &&
+      otherPlayers.every(o => (o.checked?.length ?? 0) === 0);
+
+    // Autres joueurs ayant coché cette cellule spécifique (données fraîches)
+    const otherCheckers = otherPlayers
+      .filter(other => other.checkedGp?.[idx] !== undefined);
 
     if (ch.has(idx)) {
+      // Reprendre le bonus first-move si c'est ce joueur qui l'avait eu et c'est la seule case
+      const wasFirstMove = p.gotFirstMoveBonus && (p.checked?.length ?? 0) === 1 &&
+        otherPlayers.every(o => (o.checked?.length ?? 0) === 0);
+      // Reprendre +1 thème : si personne d'autre OU si mon GP était le GP de découverte
+      const myGp = p.checkedGp?.[idx] as number | undefined;
+      let cellBonus = 0;
+      if (otherCheckers.length === 0) {
+        cellBonus = 1; // j'étais le seul à avoir coché cette case
+      } else {
+        const minOtherGp = Math.min(...otherCheckers.map(o => o.checkedGp![idx] as number));
+        if (myGp !== undefined && myGp <= minOtherGp) cellBonus = 1; // j'étais dans la fenêtre du premier GP
+      }
       ch.delete(idx);
-      score = Math.max(0, score - pts);
-      // Reprise du bonus : personne ne l'avait trouvé dans un GP précédent
-      if (!foundInPreviousGp) score = Math.max(0, score - 10);
+      score = Math.max(0, score - pts - cellBonus - (wasFirstMove ? 10 : 0));
       delete checkedGp[idx];
+      const gotFirstMoveBonus = wasFirstMove ? false : (p.gotFirstMoveBonus ?? false);
+      await this._data.updatePlayer({ ...p, checked: [...ch], checkedGp, score, gotFirstMoveBonus });
       // reset streak on uncheck
       this._streak.set(0);
       if (this._streakTimer) { clearTimeout(this._streakTimer); this._streakTimer = null; }
+      return await this._applyLines(true);
     } else {
-      ch.add(idx);
-      score += pts;
-      // +10 bonus si personne ne l'a trouvé dans un GP précédent (même GP = même bonus)
-      if (!foundInPreviousGp) {
-        score += 10;
+      // +1 thème : premier à trouver cette case (ou même GP que le premier)
+      let cellBonus = 0;
+      if (otherCheckers.length === 0) {
+        cellBonus = 1; // premier à cocher cette case → bonus thème
+      } else {
+        const minOtherGp = Math.min(...otherCheckers.map(o => o.checkedGp![idx] as number));
+        if (minOtherGp === currentGpIdx) cellBonus = 1; // même GP que le premier → bonus aussi
+      }
+      // +10 pour le tout premier cochage de toute la partie
+      if (isVeryFirstMove) {
+        cellBonus += 10;
         this._firstFinder.set({ tag: cell?.tag ?? '', emoji: cell?.emoji ?? '🥇' });
       }
+      ch.add(idx);
+      score += pts + cellBonus;
       checkedGp[idx] = currentGpIdx;
       // increment streak, auto-reset after 7 s of inactivity
       this._streak.update(s => s + 1);
@@ -138,7 +169,7 @@ export class GameService {
       this._streakTimer = setTimeout(() => this._streak.set(0), 7000);
     }
 
-    await this._data.updatePlayer({ ...p, checked: [...ch], checkedGp, score });
+    await this._data.updatePlayer({ ...p, checked: [...ch], checkedGp, score, gotFirstMoveBonus: p.gotFirstMoveBonus || isVeryFirstMove });
     return await this._applyLines(true);
   }
 
@@ -185,7 +216,7 @@ export class GameService {
         const otherHasLine = Object.values(this._data.players())
           .some(other => other.id !== id && other.doneLines?.includes(line.id));
         if (!otherHasLine) {
-          lineBonus += 15;
+          lineBonus += 10;
           bonusedLines.add(line.id);
           if (!firstLineName) {
             const type = line.id.startsWith('r') ? '➡️ horizontale' :
@@ -197,7 +228,7 @@ export class GameService {
         prevDone.delete(line.id);
         // Retrait du bonus de ligne si le joueur l'avait obtenu
         if (bonusedLines.has(line.id)) {
-          lineBonus -= 15;
+          lineBonus -= 10;
           bonusedLines.delete(line.id);
         }
       }
